@@ -5,4 +5,7 @@ pkgname = "models"
 add-global-variants = true
 wipe = true
 no-tests = false
-add-enum-types = true 
+add-enum-types = true
+
+[test.sqlite3]
+dbname = ":memory:" 
