@@ -1,0 +1,21 @@
+# app.get('/', (c) => {
+#   return c.text('Hello Hono!')
+# })
+
+# app.get('/users', async (c) => {
+#   const users = await prisma.user.findMany()
+#   return c.json(users)
+# })
+
+
+### Get users
+GET http://localhost:3000/users
+
+
+### Post user
+POST http://localhost:3000/users
+Content-Type: application/json
+
+{
+    "name": "John Doe"
+}
