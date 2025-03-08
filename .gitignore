@@ -131,3 +131,10 @@ dist
 python/backend-fastapi/myenv/
 python/backend-fastapi/__pycache__/
 node/backend-hono/src/test/generated/client/
+go/backend-gin/coverage.html
+go/backend-gin/coverage.out
+node/backend-hono/prisma/dev.db-shm
+node/backend-hono/prisma/dev.db-wal
+
+dev.db-shm
+dev.db-wal
