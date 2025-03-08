@@ -1,14 +1,15 @@
-run:
-	go run main.go
+.PHONY: build run generate clean
 
 build:
-	go build -o backend-gin main.go
+	go build -o bin/server cmd/server/main.go
 
-dev:
-	air
+run:
+	go run cmd/server/main.go
 
-tidy:
-	go mod tidy
+generate:
+	sqlboiler sqlite3
 
-.PHONY: run build dev tidy
+clean:
+	rm -f bin/server
+	rm -rf internal/models/*
 

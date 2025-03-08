@@ -1,6 +1,6 @@
 [sqlite3]
 dbname = "db/app.db"
-output = "db/models"
+output = "internal/models"
 pkgname = "models"
 add-global-variants = true
 wipe = true
