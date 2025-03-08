@@ -10,7 +10,7 @@ app.use('*', logger)
 app.onError(errorHandler)
 
 // ベースルート
-app.get('/', (c) => c.text('Hello Hono!'))
+app.get('/health', (c) => c.text('OK'))
 
 // コントローラーのマウント
 const userController = new UserController()
