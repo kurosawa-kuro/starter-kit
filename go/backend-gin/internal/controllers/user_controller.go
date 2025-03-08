@@ -6,10 +6,17 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/volatiletech/null/v8"
 )
 
 type UserController struct {
 	service *services.UserService
+}
+
+type CreateUserRequest struct {
+	Name     string `json:"name" binding:"required"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }
 
 func NewUserController(service *services.UserService) *UserController {
@@ -34,13 +41,29 @@ func (c *UserController) ListUsers(ctx *gin.Context) {
 }
 
 func (c *UserController) CreateUser(ctx *gin.Context) {
-	var user models.User
-	if err := ctx.ShouldBindJSON(&user); err != nil {
+	var req CreateUserRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	if err := c.service.CreateUser(ctx, &user); err != nil {
+	user := &models.User{
+		Name: req.Name,
+		Email: null.StringFromPtr(func() *string {
+			if req.Email == "" {
+				return nil
+			}
+			return &req.Email
+		}()),
+		Password: null.StringFromPtr(func() *string {
+			if req.Password == "" {
+				return nil
+			}
+			return &req.Password
+		}()),
+	}
+
+	if err := c.service.CreateUser(ctx, user); err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}

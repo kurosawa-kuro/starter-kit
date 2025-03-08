@@ -44,26 +44,58 @@ func TestListUsers(t *testing.T) {
 }
 
 func TestCreateUser(t *testing.T) {
-	r, _, cleanup := setupTestRouter()
-	defer cleanup()
+	t.Run("正常系", func(t *testing.T) {
+		r, _, cleanup := setupTestRouter()
+		defer cleanup()
 
-	user := map[string]interface{}{
-		"name":     "Test User",
-		"email":    "test@example.com",
-		"password": "password123",
-	}
-	jsonValue, _ := json.Marshal(user)
+		user := map[string]interface{}{
+			"name":     "Test User",
+			"email":    "test@example.com",
+			"password": "password123",
+		}
+		jsonValue, _ := json.Marshal(user)
 
-	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("POST", "/users", bytes.NewBuffer(jsonValue))
-	req.Header.Set("Content-Type", "application/json")
-	r.ServeHTTP(w, req)
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", "/users", bytes.NewBuffer(jsonValue))
+		req.Header.Set("Content-Type", "application/json")
+		r.ServeHTTP(w, req)
 
-	assert.Equal(t, http.StatusCreated, w.Code)
+		assert.Equal(t, http.StatusCreated, w.Code)
 
-	var response map[string]interface{}
-	err := json.Unmarshal(w.Body.Bytes(), &response)
-	assert.NoError(t, err)
-	assert.Equal(t, user["name"], response["name"])
-	assert.Equal(t, user["email"], response["email"])
+		var response map[string]interface{}
+		err := json.Unmarshal(w.Body.Bytes(), &response)
+		assert.NoError(t, err)
+		assert.Equal(t, user["name"], response["name"])
+		assert.Equal(t, user["email"], response["email"])
+	})
+
+	t.Run("不正なJSON", func(t *testing.T) {
+		r, _, cleanup := setupTestRouter()
+		defer cleanup()
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", "/users", bytes.NewBuffer([]byte(`{"invalid json`)))
+		req.Header.Set("Content-Type", "application/json")
+		r.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+	})
+
+	t.Run("必須フィールドなし", func(t *testing.T) {
+		r, _, cleanup := setupTestRouter()
+		defer cleanup()
+
+		user := map[string]interface{}{
+			"email":    "test@example.com",
+			"password": "password123",
+		}
+		jsonValue, _ := json.Marshal(user)
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", "/users", bytes.NewBuffer(jsonValue))
+		req.Header.Set("Content-Type", "application/json")
+		r.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+	})
 }
