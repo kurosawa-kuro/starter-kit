@@ -3,7 +3,9 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "test": "vitest",
+    "test": "dotenv -e src/test/.env.test -- vitest",
+    "test:setup": "prisma generate --schema=prisma/schema.test.prisma",
+    "test:migrate": "prisma migrate dev --schema=prisma/schema.test.prisma",
     "test:watch": "vitest watch",
     "test:coverage": "vitest run --coverage",
     "seed": "tsx src/database/seeder.ts"

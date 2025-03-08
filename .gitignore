@@ -130,3 +130,4 @@ dist
 .pnp.*
 python/backend-fastapi/myenv/
 python/backend-fastapi/__pycache__/
+node/backend-hono/src/test/generated/client/

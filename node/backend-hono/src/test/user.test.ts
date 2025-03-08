@@ -1,11 +1,32 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, beforeAll, afterAll } from 'vitest'
 import app from '../app.js'
-import { prisma } from '../database/client.js'
+import { prisma } from './prisma.js'
+import { PrismaClient } from './generated/client/index.js'
 
 describe('User API', () => {
+  beforeAll(async () => {
+    // テストデータベースのマイグレーション
+    const testPrisma = new PrismaClient()
+    await testPrisma.$connect()
+    await testPrisma.$executeRaw`DROP TABLE IF EXISTS User`
+    await testPrisma.$executeRaw`CREATE TABLE User (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      email TEXT UNIQUE,
+      name TEXT NOT NULL,
+      password TEXT,
+      avatar TEXT,
+      createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )`
+    await testPrisma.$disconnect()
+  })
+
   // 各テストの前にデータベースをクリーンアップ
   beforeEach(async () => {
     await prisma.user.deleteMany()
+  })
+
+  afterAll(async () => {
+    await prisma.$disconnect()
   })
 
   describe('GET /users', () => {
