@@ -1,0 +1,8 @@
+[sqlite3]
+dbname = "db/app.db"
+output = "db/models"
+pkgname = "models"
+add-global-variants = true
+wipe = true
+no-tests = false
+add-enum-types = true 
