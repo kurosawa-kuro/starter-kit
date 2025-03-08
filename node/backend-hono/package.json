@@ -2,14 +2,17 @@
   "name": "backend-hono",
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/index.ts"
+    "dev": "tsx watch src/index.ts",
+    "seed": "tsx src/database/seeder.ts"
   },
   "dependencies": {
     "@hono/node-server": "^1.13.8",
+    "@prisma/client": "^6.4.1",
     "hono": "^4.7.4"
   },
   "devDependencies": {
     "@types/node": "^20.11.17",
+    "prisma": "^6.4.1",
     "tsx": "^4.7.1"
   }
 }
