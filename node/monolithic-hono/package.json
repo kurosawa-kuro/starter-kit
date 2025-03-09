@@ -1,0 +1,17 @@
+{
+  "name": "monolithic-hono",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.13.8",
+    "hono": "^4.7.4",
+    "ejs": "^3.1.9"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.17",
+    "@types/ejs": "^3.1.5",
+    "tsx": "^4.7.1"
+  }
+}
