@@ -1,0 +1,67 @@
+### ベースURL
+@baseUrl = http://localhost:3000
+
+### ヘルスチェック
+GET {{baseUrl}}/
+
+### ユーザー一覧の取得
+GET {{baseUrl}}/users
+
+### ユーザーの作成（最小限の情報）
+POST {{baseUrl}}/users
+Content-Type: application/json
+
+{
+    "name": "田中 太郎"
+}
+
+### ユーザーの作成（すべての情報）
+POST {{baseUrl}}/users
+Content-Type: application/json
+
+{
+    "name": "山田 花子",
+    "email": "hanako@example.com",
+    "password": "password123",
+    "avatar": "https://example.com/avatar.jpg"
+}
+
+### ユーザーの作成（バリデーションエラー）
+POST {{baseUrl}}/users
+Content-Type: application/json
+
+{
+    "name": "",
+    "email": "invalid-email"
+}
+
+### 特定のユーザーの取得
+GET {{baseUrl}}/users/1
+
+### 存在しないユーザーの取得
+GET {{baseUrl}}/users/999
+
+### ユーザー情報の更新（部分更新）
+PUT {{baseUrl}}/users/1
+Content-Type: application/json
+
+{
+    "name": "田中 次郎"
+}
+
+### ユーザー情報の更新（全項目）
+PUT {{baseUrl}}/users/1
+Content-Type: application/json
+
+{
+    "name": "田中 三郎",
+    "email": "saburo@example.com",
+    "password": "newpassword123",
+    "avatar": "https://example.com/new-avatar.jpg"
+}
+
+### ユーザーの削除
+DELETE {{baseUrl}}/users/1
+
+### 存在しないユーザーの削除
+DELETE {{baseUrl}}/users/999
