@@ -1,7 +1,15 @@
-.PHONY: install dev test test-setup test-migrate test-watch test-coverage seed clean help
+# --------------------------------------------
+# ターゲット一覧 (.PHONY)
+# --------------------------------------------
+.PHONY: install dev test test-setup test-migrate test-watch test-coverage seed clean help \
+        migrate generate db-push db-seed studio
 
 # デフォルトターゲット
 .DEFAULT_GOAL := help
+
+# --------------------------------------------
+# 基本的なコマンド
+# --------------------------------------------
 
 # 依存関係のインストール
 install:
@@ -50,16 +58,52 @@ clean:
 	rm -rf dist
 	rm -rf coverage
 
-# ヘルプコマンド
+# --------------------------------------------
+# Prisma 関連コマンド
+# --------------------------------------------
+
+# Prisma のマイグレーション
+migrate:
+	@echo "🚀 Prisma: Migrate dev..."
+	npx prisma migrate dev --name init
+
+# Prisma Client の再生成
+generate:
+	@echo "🚀 Prisma: Generate Client..."
+	npx prisma generate --schema=prisma/schema.prisma
+
+# Prisma: スキーマを DB に直接プッシュ
+db-push:
+	@echo "🚀 Prisma: DB Push..."
+	npx prisma db push --schema=prisma/schema.prisma
+
+# Prisma: DB シード
+db-seed:
+	@echo "🚀 Prisma: DB Seed..."
+	npx prisma db seed --schema=prisma/schema.prisma
+
+# Prisma: Studio を起動
+studio:
+	@echo "🚀 Prisma: Studio..."
+	npx prisma studio
+
+# --------------------------------------------
+# ヘルプ表示
+# --------------------------------------------
 help:
-	@echo "🔧 利用可能なコマンド:"
-	@echo "make install      - 依存関係をインストール"
-	@echo "make dev         - 開発サーバーを起動"
-	@echo "make test        - テストを実行"
-	@echo "make test-setup  - テスト環境をセットアップ"
-	@echo "make test-migrate - テストDBのマイグレーションを実行"
-	@echo "make test-watch  - テストを監視モードで実行"
-	@echo "make test-coverage - テストカバレッジレポートを生成"
-	@echo "make seed        - データベースにシードデータを投入"
-	@echo "make clean       - 生成されたファイルを削除"
-	@echo "make help        - このヘルプメッセージを表示"
+	@echo "🔧 利用可能なコマンド一覧:"
+	@echo "make install         - 依存関係をインストール"
+	@echo "make dev             - 開発サーバーを起動"
+	@echo "make test            - テストを実行"
+	@echo "make test-setup      - テスト環境をセットアップ"
+	@echo "make test-migrate    - テストDBのマイグレーションを実行"
+	@echo "make test-watch      - テストを監視モードで実行"
+	@echo "make test-coverage   - テストカバレッジレポートを生成"
+	@echo "make seed            - データベースにシードデータを投入"
+	@echo "make migrate         - Prisma: DBマイグレーション(dev)"
+	@echo "make generate        - Prisma Client の生成"
+	@echo "make db-push         - Prisma: DBへスキーマ内容を直反映"
+	@echo "make db-seed         - Prisma: データベースにシードデータを投入"
+	@echo "make studio          - Prisma: GUIでDBを操作"
+	@echo "make clean           - 生成されたファイルを削除"
+	@echo "make help            - このヘルプメッセージを表示"

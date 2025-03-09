@@ -5,7 +5,52 @@
     <title><%= title %></title>
   </head>
   <body>
-    <h1>Hello <%= name %>!</h1>
-    <p>現在時刻: <%= currentTime %></p>
+    <h1>ユーザー一覧</h1>
+    
+    <!-- ユーザー追加フォーム -->
+    <form id="createUserForm">
+      <input type="text" name="userName" placeholder="ユーザー名" required>
+      <button type="submit">登録</button>
+    </form>
+
+    <!-- ユーザー一覧表示 -->
+    <div id="userList">
+      <h2>登録済みユーザー</h2>
+      <ul>
+      <% if (users && users.length > 0) { %>
+        <% users.forEach(function(user) { %>
+          <li><%= user.name %></li>
+        <% }); %>
+      <% } else { %>
+        <li>ユーザーが登録されていません</li>
+      <% } %>
+      </ul>
+    </div>
+
+    <script>
+      document.getElementById('createUserForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const userName = e.target.userName.value;
+
+        try {
+          const response = await fetch('/users', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ name: userName })
+          });
+
+          if (response.ok) {
+            window.location.reload();
+          } else {
+            alert('エラーが発生しました');
+          }
+        } catch (error) {
+          console.error('Error:', error);
+          alert('エラーが発生しました');
+        }
+      });
+    </script>
   </body>
 </html> 
