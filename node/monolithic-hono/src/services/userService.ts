@@ -1,5 +1,5 @@
-import { prisma } from '../config/database'
-import type { User } from '../models/userModel'
+import { prisma } from '../config/database.js'
+import type { User } from '../models/userModel.js'
 
 export class UserService {
   static async findAll(): Promise<User[]> {
