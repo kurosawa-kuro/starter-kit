@@ -1,136 +1,162 @@
-# Express Prisma PostgreSQL API
+# Express Prisma API Starter Kit
 
-Node.js、Express、Prisma、PostgreSQLを使用したRESTful APIのサンプルです。
+シンプルなユーザー管理APIを提供するExpress.js + Prisma + PostgreSQLのスターターキットです。
 
-## プロジェクト概要
+## 機能
 
-このプロジェクトは、Node.jsとExpressを使用してRESTful APIを提供し、Prismaを使用してPostgreSQLデータベースに接続します。
+- ユーザー管理（CRUD操作）
+- RESTful API設計
+- Swagger UIによるAPIドキュメント
+- テスト環境の整備
+- エラーハンドリング
+- リクエストロギング
 
-### 主な機能
-- ユーザーの作成（POST /users）
-- ユーザー一覧の取得（GET /users）
-- 特定のユーザーの取得（GET /users/:email）
+## 技術スタック
 
-### 技術スタック
 - Node.js
-- Express
+- Express.js
 - Prisma ORM
 - PostgreSQL
+- Jest (テスト)
+- Swagger UI (APIドキュメント)
+
+## 必要条件
+
+- Node.js (v14以上)
+- PostgreSQL
+- npm または yarn
 
 ## セットアップ
 
-### 前提条件
-- Node.js (v14以上)
-- PostgreSQL (v12以上)
-- npm または yarn
-
-### インストール手順
-
-1. リポジトリのクローン:
+1. リポジトリのクローン
 ```bash
 git clone <repository-url>
-cd express-prisma-api
+cd backend-express-prisma
 ```
 
-2. 環境変数の設定:
-.env.sampleを.envにコピー
-
-```bash
-cp .env.sample .env
-```
-
-3. データベースの作成（存在しない場合）:
-```bash
-psql -U postgres -c "CREATE DATABASE local_dev;"
-```
-
-4. 依存関係のインストール:
+2. 依存関係のインストール
 ```bash
 npm install
 ```
 
-5. データベースのマイグレーション:
-```bash
-npx prisma migrate dev --name init
+3. 環境変数の設定
+`.env`ファイルを作成し、以下の内容を設定します：
+```env
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/local?schema=public"
+PORT=3000
 ```
 
-## 使用方法
+4. データベースのセットアップ
+```bash
+npx prisma migrate dev
+```
+
+5. アプリケーションの起動
+```bash
+npm start
+```
+
+## 開発
 
 ### 開発サーバーの起動
 ```bash
 npm run dev
 ```
 
-### APIエンドポイント
-
-#### ユーザーの作成
+### テストの実行
 ```bash
-POST /users
+npm test
+```
+
+### Prisma Studioの起動
+```bash
+npx prisma studio
+```
+
+## API仕様
+
+### ユーザー管理
+
+#### ユーザー作成
+```http
+POST /api/users
 Content-Type: application/json
 
 {
   "email": "user@example.com",
-  "name": "John Doe"
+  "name": "User Name"
 }
 ```
 
-#### ユーザー一覧の取得
-```bash
-GET /users
+#### ユーザー一覧取得
+```http
+GET /api/users
 ```
 
-#### 特定のユーザーの取得
-```bash
-GET /users/:email
+#### ユーザー詳細取得
+```http
+GET /api/users/:id
 ```
 
-## データベース接続情報
-- ホスト: localhost
-- データベース: local_dev
-- ユーザー名: postgres
-- パスワード: postgres
-- ポート: 5432（デフォルト）
+#### ユーザー更新
+```http
+PUT /api/users/:id
+Content-Type: application/json
 
-## トラブルシューティング
+{
+  "email": "updated@example.com",
+  "name": "Updated Name"
+}
+```
 
-### よくある問題と解決方法
+#### ユーザー削除
+```http
+DELETE /api/users/:id
+```
 
-1. データベース接続エラー
-   - PostgreSQLが実行中であることを確認
-   - 接続情報（ホスト、ポート、認証情報）が正しいことを確認
-   - データベースが存在することを確認
+### APIドキュメント
 
-2. マイグレーションエラー
-   - `npx prisma migrate reset`を実行してデータベースをリセット
-   - マイグレーションファイルが正しいことを確認
+Swagger UIでAPIドキュメントを確認できます：
+```
+http://localhost:3000/api-docs
+```
 
-3. APIエラー
-   - リクエストの形式が正しいことを確認
-   - 必要なパラメータが全て指定されていることを確認
-   - エラーメッセージを確認
+## プロジェクト構造
 
-## 開発
-
-### プロジェクト構造
 ```
 .
-├── prisma/
-│   └── schema.prisma    # データベーススキーマ定義
+├── prisma/              # Prisma設定とマイグレーション
 ├── src/
-│   └── index.js        # メインアプリケーション
+│   ├── __tests__/      # テストファイル
+│   ├── config/         # 設定ファイル
+│   ├── controllers/    # コントローラー
+│   ├── middleware/     # ミドルウェア
+│   ├── routes/         # ルート定義
+│   ├── services/       # ビジネスロジック
+│   └── index.js        # アプリケーションエントリーポイント
 ├── .env                # 環境変数
 ├── package.json        # プロジェクト設定
-└── README.md          # ドキュメント
+└── README.md          # プロジェクトドキュメント
 ```
 
-### 開発コマンド
-```bash
-# 開発モードで実行
-npm run dev
+## エラーハンドリング
 
-# 本番モードで実行
-npm start
+アプリケーションは以下のような形式でエラーレスポンスを返します：
 
-# Prisma Studioの起動（データベース管理UI）
-npx prisma studio
+```json
+{
+  "status": "fail",
+  "message": "エラーメッセージ"
+}
 ```
+
+## ロギング
+
+アプリケーションは以下のログを出力します：
+- リクエストログ
+- エラーログ
+- アプリケーションログ
+
+## ライセンス
+
+MIT
