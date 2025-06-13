@@ -1,8 +1,9 @@
 const winston = require('winston');
+const { isProd, values } = require('../config/environment');
 
 // ロガーの設定
 const logger = winston.createLogger({
-  level: 'info',
+  level: values[process.env.NODE_ENV || 'dev'].logLevel,
   format: winston.format.combine(
     winston.format.timestamp(),
     winston.format.json()
@@ -13,7 +14,8 @@ const logger = winston.createLogger({
   ]
 });
 
-if (process.env.NODE_ENV !== 'production') {
+// 開発環境とテスト環境でのみコンソールログを有効化
+if (!isProd) {
   logger.add(new winston.transports.Console({
     format: winston.format.simple()
   }));

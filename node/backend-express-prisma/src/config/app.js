@@ -3,15 +3,16 @@ const cors = require('cors');
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpecs = require('./swagger');
 const userRoutes = require('../routes/userRoutes');
-const { errorHandler } = require('../middleware/errorHandler');
 const { requestLogger } = require('../middleware/logger');
+const { values } = require('./environment');
 require('dotenv').config();
 
 const app = express();
 
-
 // 基本ミドルウェアの設定
-app.use(cors());
+app.use(cors({
+  origin: values[process.env.NODE_ENV || 'dev'].corsOrigin
+}));
 app.use(express.json());
 app.use(requestLogger);
 
@@ -23,10 +24,9 @@ app.get('/health', (req, res) => {
 // APIルートの設定
 app.use('/api/users', userRoutes);
 
-// Swagger UI
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
-
-// エラーハンドリング
-app.use(errorHandler);
+// Swagger UI（開発環境とテスト環境でのみ有効）
+if (process.env.NODE_ENV !== 'prod') {
+  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
+}
 
 module.exports = app; 

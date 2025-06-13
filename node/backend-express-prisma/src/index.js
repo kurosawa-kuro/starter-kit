@@ -1,5 +1,5 @@
 const app = require('./config/app');
-const handleErrors = require('./middleware/errorHandler');
+const { errorHandler } = require('./middleware/errorHandler');
 const userRoutes = require('./routes/userRoutes');
 
 const port = process.env.PORT || 3000;
@@ -13,7 +13,7 @@ app.get('/', (req, res) => {
 app.use('/users', userRoutes);
 
 // エラーハンドリング
-app.use(handleErrors);
+app.use(errorHandler);
 
 // サーバー起動
 app.listen(port, () => {
