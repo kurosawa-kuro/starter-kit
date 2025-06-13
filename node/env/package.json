@@ -1,0 +1,27 @@
+{
+  "name": "env",
+  "version": "1.0.0",
+  "description": "シンプルなユーザー管理APIを提供するExpress.js + Prisma + PostgreSQLのスターターキットです。",
+  "main": "environment.js",
+  "scripts": {
+    "validate": "node scripts/validate-env.js",
+    "predev": "npm run validate",
+    "serve:dev": "node -r dotenv/config main.js dotenv_config_path=.env.dev",
+    "serve:test": "node -r dotenv/config main.js dotenv_config_path=.env.test",
+    "serve:stag": "node -r dotenv/config main.js dotenv_config_path=.env.stag",
+    "serve:stag-test": "node -r dotenv/config main.js dotenv_config_path=.env.stag.test",
+    "serve:prod": "node -r dotenv/config main.js dotenv_config_path=.env.prod",
+    "serve:prod-test": "node -r dotenv/config main.js dotenv_config_path=.env.prod.test",
+    "dev": "npm run serve:dev"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "dotenv": "^16.5.0"
+  },
+  "devDependencies": {
+    "chalk": "^4.1.2"
+  }
+}
