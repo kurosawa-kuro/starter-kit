@@ -2,7 +2,7 @@ const app = require('./config/app');
 const { errorHandler } = require('./middleware/errorHandler');
 const userRoutes = require('./routes/userRoutes');
 
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 8080;
 
 // ヘルスチェックエンドポイント
 app.get('/', (req, res) => {
