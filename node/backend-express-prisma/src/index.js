@@ -13,4 +13,5 @@ app.use(handleErrors);
 // サーバー起動
 app.listen(port, () => {
   console.log(`サーバーが起動しました: http://localhost:${port}`);
+  console.log(`APIドキュメント: http://localhost:${port}/api-docs`);
 }); 
