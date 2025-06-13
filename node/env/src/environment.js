@@ -14,19 +14,23 @@ const ENV = {
 const values = {
   [ENV.DEV]: {
     logLevel: 'debug',
-    corsOrigin: 'http://localhost:3000'
+    corsOrigin: 'http://localhost:3000',
+    port: 8080
   },
   [ENV.TEST]: {
     logLevel: 'debug',
-    corsOrigin: 'http://localhost:3000'
+    corsOrigin: 'http://localhost:3000',
+    port: 8080
   },
   [ENV.STAG]: {
     logLevel: 'info',
-    corsOrigin: 'https://staging.example.com'
+    corsOrigin: 'https://staging.example.com',
+    port: 8080
   },
   [ENV.PROD]: {
     logLevel: 'warn',
-    corsOrigin: 'https://example.com'
+    corsOrigin: 'https://example.com',
+    port: 8080
   }
 };
 
