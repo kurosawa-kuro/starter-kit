@@ -11,4 +11,4 @@ console.log(chalk.green('環境:'), config.currentEnv);
 console.log(chalk.green('データベースURL:'), process.env.DATABASE_URL);
 console.log(chalk.green('ログレベル:'), config.values[config.currentEnv].logLevel);
 console.log(chalk.green('CORS Origin:'), config.values[config.currentEnv].corsOrigin);
-console.log(chalk.blue('================'));
+console.log(chalk.blue('================')); 
