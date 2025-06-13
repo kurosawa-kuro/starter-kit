@@ -6,7 +6,14 @@ const logger = winston.createLogger({
   level: values[process.env.NODE_ENV || 'dev'].logLevel,
   format: winston.format.combine(
     winston.format.timestamp(),
-    winston.format.json()
+    winston.format.printf(({ timestamp, level, message, ...meta }) => {
+      return JSON.stringify({
+        timestamp,
+        level,
+        message,
+        ...meta
+      });
+    })
   ),
   transports: [
     new winston.transports.File({ filename: 'error.log', level: 'error' }),
@@ -17,7 +24,17 @@ const logger = winston.createLogger({
 // 開発環境とテスト環境でのみコンソールログを有効化
 if (!isProd) {
   logger.add(new winston.transports.Console({
-    format: winston.format.simple()
+    format: winston.format.combine(
+      winston.format.colorize(),
+      winston.format.printf(({ timestamp, level, message, ...meta }) => {
+        return JSON.stringify({
+          timestamp,
+          level,
+          message,
+          ...meta
+        });
+      })
+    )
   }));
 }
 

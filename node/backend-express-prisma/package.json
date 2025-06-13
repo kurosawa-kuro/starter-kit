@@ -5,7 +5,7 @@
   "main": "src/index.js",
   "scripts": {
     "start": "cross-env NODE_ENV=prod node src/index.js",
-    "dev": "cross-env NODE_ENV=dev node src/index.js",
+    "dev": "cross-env NODE_ENV=dev nodemon src/index.js",
     "db:migrate": "cross-env NODE_ENV=dev prisma migrate deploy",
     "db:generate": "cross-env NODE_ENV=dev prisma generate",
     "db:reset": "cross-env NODE_ENV=dev prisma migrate reset --force",
