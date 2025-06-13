@@ -74,7 +74,7 @@ router.post('/', validateUser, userController.createUser);
  *               items:
  *                 $ref: '#/components/schemas/User'
  */
-router.get('/', userController.getAllUsers);
+router.get('/', userController.getUsers);
 
 /**
  * @swagger

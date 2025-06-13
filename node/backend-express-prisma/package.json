@@ -4,9 +4,15 @@
   "description": "Express API with Prisma and PostgreSQL",
   "main": "src/index.js",
   "scripts": {
-    "start": "node src/index.js",
-    "dev": "nodemon src/index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "cross-env NODE_ENV=production node src/index.js",
+    "dev": "cross-env NODE_ENV=development node src/index.js",
+    "db:migrate": "cross-env NODE_ENV=development prisma migrate deploy",
+    "db:generate": "cross-env NODE_ENV=development prisma generate",
+    "db:reset": "cross-env NODE_ENV=development prisma migrate reset --force",
+    "test:setup": "cross-env NODE_ENV=test DATABASE_URL=\"postgresql://postgres:postgres@localhost:5432/local_test?schema=public\" prisma generate && cross-env NODE_ENV=test DATABASE_URL=\"postgresql://postgres:postgres@localhost:5432/local_test?schema=public\" prisma migrate reset --force",
+    "test": "cross-env NODE_ENV=test DATABASE_URL=\"postgresql://postgres:postgres@localhost:5432/local_test?schema=public\" jest",
+    "test:watch": "cross-env NODE_ENV=test DATABASE_URL=\"postgresql://postgres:postgres@localhost:5432/local_test?schema=public\" jest --watch",
+    "test:coverage": "cross-env NODE_ENV=test DATABASE_URL=\"postgresql://postgres:postgres@localhost:5432/local_test?schema=public\" jest --coverage"
   },
   "dependencies": {
     "@prisma/client": "^5.10.0",
@@ -18,7 +24,20 @@
     "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
+    "cross-env": "^7.0.3",
+    "jest": "^29.7.0",
     "nodemon": "^3.0.3",
-    "prisma": "^5.10.0"
+    "prisma": "^5.10.0",
+    "supertest": "^6.3.4"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "coverageDirectory": "coverage",
+    "testMatch": [
+      "**/__tests__/**/*.test.js"
+    ],
+    "setupFiles": [
+      "dotenv/config"
+    ]
   }
 }
