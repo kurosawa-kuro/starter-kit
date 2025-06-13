@@ -7,7 +7,7 @@
     "validate": "node src/scripts/validate-env.js",
     "predev": "npm run validate",
     "serve:dev": "node -r dotenv/config src/main.js dotenv_config_path=.env.dev",
-    "serve:test": "node -r dotenv/config src/main.js dotenv_config_path=.env.test",
+    "serve:test": "NODE_ENV=test node src/app.js",
     "serve:stag": "node -r dotenv/config src/main.js dotenv_config_path=.env.stag",
     "serve:stag-test": "node -r dotenv/config src/main.js dotenv_config_path=.env.stag.test",
     "serve:prod": "node -r dotenv/config src/main.js dotenv_config_path=.env.prod",
