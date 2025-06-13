@@ -1,0 +1,18 @@
+{
+  "name": "cli-nodejs-prisma",
+  "version": "1.0.0",
+  "description": "CLI application with Node.js, Prisma and PostgreSQL",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.10.0",
+    "commander": "^12.0.0",
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "prisma": "^5.10.0"
+  }
+} 
