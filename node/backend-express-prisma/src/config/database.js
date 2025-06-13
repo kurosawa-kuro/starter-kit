@@ -1,7 +1,7 @@
 require('dotenv').config();
 
 const getDatabaseUrl = () => {
-  const env = process.env.NODE_ENV || 'development';
+  const env = process.env.NODE_ENV || 'dev';
   
   switch (env) {
     case 'test':

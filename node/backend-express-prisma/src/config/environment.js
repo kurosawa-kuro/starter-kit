@@ -2,11 +2,19 @@
  * 環境設定の定数と検証ロジック
  */
 
+// 環境の定数定義
+const Environment = Object.freeze({
+  DEV: 'dev',
+  TEST: 'test',
+  STAGING: 'staging',
+  PROD: 'prod'
+});
+
 // 許可された環境の定義
-const ALLOWED_ENVIRONMENTS = ['dev', 'test', 'prod'];
+const ALLOWED_ENVIRONMENTS = [Environment.DEV, Environment.TEST, Environment.PROD];
 
 // 現在の環境を取得（デフォルトは'dev'）
-const currentEnv = process.env.NODE_ENV || 'dev';
+const currentEnv = process.env.NODE_ENV || Environment.DEV;
 
 // 環境の検証
 if (!ALLOWED_ENVIRONMENTS.includes(currentEnv)) {
@@ -15,15 +23,15 @@ if (!ALLOWED_ENVIRONMENTS.includes(currentEnv)) {
 
 // 環境に応じた設定
 const config = {
-  isDev: currentEnv === 'dev',
-  isTest: currentEnv === 'test',
-  isProd: currentEnv === 'prod',
+  isDev: currentEnv === Environment.DEV,
+  isTest: currentEnv === Environment.TEST,
+  isProd: currentEnv === Environment.PROD,
   currentEnv,
   allowedEnvironments: ALLOWED_ENVIRONMENTS,
   
   // 環境ごとの設定値
   values: {
-    dev: {
+    [Environment.DEV]: {
       logLevel: 'debug',
       corsOrigin: '*',
       rateLimit: {
@@ -31,7 +39,7 @@ const config = {
         max: 1000 // リクエスト数
       }
     },
-    test: {
+    [Environment.TEST]: {
       logLevel: 'info',
       corsOrigin: '*',
       rateLimit: {
@@ -39,7 +47,7 @@ const config = {
         max: 1000
       }
     },
-    prod: {
+    [Environment.PROD]: {
       logLevel: 'warn',
       corsOrigin: process.env.CORS_ORIGIN || 'https://example.com',
       rateLimit: {

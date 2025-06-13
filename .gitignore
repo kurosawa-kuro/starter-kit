@@ -139,3 +139,8 @@ node/backend-hono/prisma/dev.db-wal
 dev.db-shm
 dev.db-wal
 node/backend-hono-chatbot/src/test/generated/client/
+node/backend-express-prisma/.env.prod
+node/backend-express-prisma/.env.prod.test
+node/backend-express-prisma/.env.stag
+node/backend-express-prisma/.env.stag.test
+node/backend-express-prisma/.env.test
