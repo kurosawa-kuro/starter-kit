@@ -1,58 +1,76 @@
-const prisma = require('../config/prisma');
-const { validationResult } = require('express-validator');
+const userService = require('../services/userService');
+const { AppError } = require('../middleware/errorHandler');
 
-const createUser = async (req, res) => {
+// ユーザー作成
+const createUser = async (req, res, next) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-
-    const { email, name } = req.body;
-
-    // メールアドレスの重複チェック
-    const existingUser = await prisma.user.findUnique({
-      where: { email }
+    const user = await userService.createUser(req.body);
+    res.status(201).json({
+      status: 'success',
+      data: { user }
     });
-
-    if (existingUser) {
-      return res.status(400).json({ error: 'このメールアドレスは既に使用されています' });
-    }
-
-    // ユーザーの作成
-    const user = await prisma.user.create({
-      data: {
-        email,
-        name
-      }
-    });
-
-    res.status(201).json(user);
   } catch (error) {
-    console.error('ユーザー作成エラー:', error);
-    res.status(500).json({ error: 'ユーザーの作成に失敗しました' });
+    next(error);
   }
 };
 
-const getUsers = async (req, res) => {
+// ユーザー一覧取得
+const getUsers = async (req, res, next) => {
   try {
-    const users = await prisma.user.findMany();
-    res.status(200).json(users);
+    const users = await userService.getAllUsers();
+    res.status(200).json({
+      status: 'success',
+      results: users.length,
+      data: { users }
+    });
   } catch (error) {
-    console.error('ユーザー一覧取得エラー:', error);
-    res.status(500).json({ error: 'ユーザー一覧の取得に失敗しました' });
+    next(error);
   }
 };
 
-const getUserByEmail = async (req, res, next) => {
+// ユーザー詳細取得
+const getUser = async (req, res, next) => {
   try {
-    const user = await prisma.user.findUnique({
-      where: { email: req.params.email }
-    });
-    if (!user) {
-      return res.status(404).json({ error: 'ユーザーが見つかりません' });
+    const id = parseInt(req.params.id, 10);
+    if (isNaN(id)) {
+      throw new AppError('無効なユーザーIDです', 400);
     }
-    res.json(user);
+    const user = await userService.getUserById(id);
+    res.status(200).json({
+      status: 'success',
+      data: { user }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// ユーザー更新
+const updateUser = async (req, res, next) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    if (isNaN(id)) {
+      throw new AppError('無効なユーザーIDです', 400);
+    }
+    const user = await userService.updateUser(id, req.body);
+    res.status(200).json({
+      status: 'success',
+      data: { user }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// ユーザー削除
+const deleteUser = async (req, res, next) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    if (isNaN(id)) {
+      throw new AppError('無効なユーザーIDです', 400);
+    }
+    await userService.deleteUser(id);
+    res.status(204).send();
   } catch (error) {
     next(error);
   }
@@ -61,5 +79,7 @@ const getUserByEmail = async (req, res, next) => {
 module.exports = {
   createUser,
   getUsers,
-  getUserByEmail
+  getUser,
+  updateUser,
+  deleteUser
 }; 

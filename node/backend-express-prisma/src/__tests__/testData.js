@@ -6,28 +6,24 @@
 // テストユーザーデータ
 const testUser = {
   email: 'test@example.com',
-  name: 'Test User',
-  password: 'password123'
+  name: 'Test User'
 };
 
 // 管理者ユーザーデータ
 const adminUser = {
   email: 'admin@example.com',
-  name: 'Admin User',
-  password: 'admin123'
+  name: 'Admin User'
 };
 
 // テストユーザーリスト
 const testUsers = [
   {
     email: 'user1@example.com',
-    name: 'User One',
-    password: 'password123'
+    name: 'User One'
   },
   {
     email: 'user2@example.com',
-    name: 'User Two',
-    password: 'password123'
+    name: 'User Two'
   }
 ];
 

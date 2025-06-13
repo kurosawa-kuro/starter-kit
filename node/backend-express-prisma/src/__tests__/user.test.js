@@ -1,75 +1,180 @@
 const request = require('supertest');
 const app = require('../config/app');
+const { testUser, adminUser, testUsers } = require('./testData');
 const prisma = require('../config/prisma');
-const { testUser } = require('./testData');
 
-describe('User API', () => {
+describe('User API Tests', () => {
+  // テストデータのセットアップ
   beforeEach(async () => {
-    // テストデータのクリーンアップ
     await prisma.user.deleteMany();
   });
 
-  describe('POST /users', () => {
-    it('新しいユーザーを作成できること', async () => {
+  describe('POST /api/users', () => {
+    it('should create a new user', async () => {
       const response = await request(app)
-        .post('/users')
+        .post('/api/users')
         .send(testUser);
 
       expect(response.status).toBe(201);
-      expect(response.body).toHaveProperty('id');
-      expect(response.body.email).toBe(testUser.email);
-      expect(response.body.name).toBe(testUser.name);
-      expect(response.body).toHaveProperty('createdAt');
-      expect(response.body).toHaveProperty('updatedAt');
+      expect(response.body.status).toBe('success');
+      expect(response.body.data.user).toHaveProperty('id');
+      expect(response.body.data.user.email).toBe(testUser.email);
+      expect(response.body.data.user.name).toBe(testUser.name);
     });
 
-    it('重複するメールアドレスでユーザーを作成できないこと', async () => {
+    it('should not create user with existing email', async () => {
       // 最初のユーザーを作成
       await request(app)
-        .post('/users')
+        .post('/api/users')
         .send(testUser);
 
       // 同じメールアドレスで再度作成を試みる
       const response = await request(app)
-        .post('/users')
+        .post('/api/users')
         .send(testUser);
 
       expect(response.status).toBe(400);
-      expect(response.body).toHaveProperty('error');
+      expect(response.body.status).toBe('fail');
     });
 
-    it('必須フィールドが欠けている場合にエラーを返すこと', async () => {
+    it('should validate user input', async () => {
       const invalidUser = {
-        email: 'test@example.com'
-        // nameが欠けている
+        email: 'invalid-email',
+        name: 'a'
       };
 
       const response = await request(app)
-        .post('/users')
+        .post('/api/users')
         .send(invalidUser);
 
       expect(response.status).toBe(400);
-      expect(response.body).toHaveProperty('error');
+      expect(response.body.status).toBe('fail');
     });
   });
 
-  describe('GET /users', () => {
-    it('ユーザー一覧を取得できること', async () => {
+  describe('GET /api/users', () => {
+    beforeEach(async () => {
       // テストユーザーを作成
-      await request(app)
-        .post('/users')
-        .send(testUser);
+      for (const user of testUsers) {
+        await request(app)
+          .post('/api/users')
+          .send(user);
+      }
+    });
 
+    it('should get all users', async () => {
       const response = await request(app)
-        .get('/users');
+        .get('/api/users');
 
       expect(response.status).toBe(200);
-      expect(Array.isArray(response.body)).toBe(true);
-      expect(response.body.length).toBe(1);
-      expect(response.body[0].email).toBe(testUser.email);
-      expect(response.body[0].name).toBe(testUser.name);
-      expect(response.body[0]).toHaveProperty('createdAt');
-      expect(response.body[0]).toHaveProperty('updatedAt');
+      expect(response.body.status).toBe('success');
+      expect(response.body.results).toBe(testUsers.length);
+      expect(response.body.data.users).toHaveLength(testUsers.length);
+    });
+  });
+
+  describe('GET /api/users/:id', () => {
+    let userId;
+
+    beforeEach(async () => {
+      // テストユーザーを作成
+      const response = await request(app)
+        .post('/api/users')
+        .send(testUser);
+      userId = response.body.data.user.id;
+    });
+
+    it('should get user by id', async () => {
+      const response = await request(app)
+        .get(`/api/users/${userId}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.status).toBe('success');
+      expect(response.body.data.user.id).toBe(userId);
+      expect(response.body.data.user.email).toBe(testUser.email);
+    });
+
+    it('should return 404 for non-existent user', async () => {
+      const response = await request(app)
+        .get('/api/users/999999');
+
+      expect(response.status).toBe(404);
+      expect(response.body.status).toBe('fail');
+    });
+  });
+
+  describe('PUT /api/users/:id', () => {
+    let userId;
+
+    beforeEach(async () => {
+      // テストユーザーを作成
+      const response = await request(app)
+        .post('/api/users')
+        .send(testUser);
+      userId = response.body.data.user.id;
+    });
+
+    it('should update user', async () => {
+      const updateData = {
+        name: 'Updated Name',
+        email: 'updated@example.com'
+      };
+
+      const response = await request(app)
+        .put(`/api/users/${userId}`)
+        .send(updateData);
+
+      expect(response.status).toBe(200);
+      expect(response.body.status).toBe('success');
+      expect(response.body.data.user.name).toBe(updateData.name);
+      expect(response.body.data.user.email).toBe(updateData.email);
+    });
+
+    it('should not update with invalid data', async () => {
+      const invalidData = {
+        email: 'invalid-email',
+        name: 'a'
+      };
+
+      const response = await request(app)
+        .put(`/api/users/${userId}`)
+        .send(invalidData);
+
+      expect(response.status).toBe(400);
+      expect(response.body.status).toBe('fail');
+    });
+  });
+
+  describe('DELETE /api/users/:id', () => {
+    let userId;
+
+    beforeEach(async () => {
+      // テストユーザーを作成
+      const response = await request(app)
+        .post('/api/users')
+        .send(testUser);
+      userId = response.body.data.user.id;
+    });
+
+    it('should delete user', async () => {
+      const response = await request(app)
+        .delete(`/api/users/${userId}`);
+
+      expect(response.status).toBe(204);
+
+      // ユーザーが実際に削除されたことを確認
+      const deletedUser = await prisma.user.findUnique({
+        where: { id: userId }
+      });
+      expect(deletedUser).toBeNull();
+    });
+
+    it('should return 404 for non-existent user', async () => {
+      const response = await request(app)
+        .delete('/api/users/999999');
+
+      expect(response.status).toBe(404);
+      expect(response.body.status).toBe('fail');
     });
   });
 }); 

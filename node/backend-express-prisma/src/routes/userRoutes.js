@@ -1,7 +1,13 @@
 const express = require('express');
 const router = express.Router();
-const userController = require('../controllers/userController');
 const { validateUser } = require('../middleware/validators');
+const {
+  createUser,
+  getUsers,
+  getUser,
+  updateUser,
+  deleteUser
+} = require('../controllers/userController');
 
 /**
  * @swagger
@@ -19,7 +25,7 @@ const { validateUser } = require('../middleware/validators');
  *         email:
  *           type: string
  *           format: email
- *           description: ユーザーのメールアドレス
+ *           description: メールアドレス
  *         name:
  *           type: string
  *           description: ユーザー名
@@ -27,7 +33,7 @@ const { validateUser } = require('../middleware/validators');
 
 /**
  * @swagger
- * /users:
+ * /api/users:
  *   post:
  *     summary: 新規ユーザーを作成
  *     tags: [Users]
@@ -36,69 +42,91 @@ const { validateUser } = require('../middleware/validators');
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             required:
- *               - email
- *               - name
- *             properties:
- *               email:
- *                 type: string
- *                 format: email
- *               name:
- *                 type: string
+ *             $ref: '#/components/schemas/User'
  *     responses:
  *       201:
  *         description: ユーザーが作成されました
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/User'
  *       400:
  *         description: 無効なリクエスト
  */
-router.post('/', validateUser, userController.createUser);
+router.post('/', validateUser, createUser);
 
 /**
  * @swagger
- * /users:
+ * /api/users:
  *   get:
- *     summary: 全ユーザーを取得
+ *     summary: ユーザー一覧を取得
  *     tags: [Users]
  *     responses:
  *       200:
  *         description: ユーザー一覧
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/User'
  */
-router.get('/', userController.getUsers);
+router.get('/', getUsers);
 
 /**
  * @swagger
- * /users/{email}:
+ * /api/users/{id}:
  *   get:
- *     summary: メールアドレスでユーザーを検索
+ *     summary: 特定のユーザーを取得
  *     tags: [Users]
  *     parameters:
  *       - in: path
- *         name: email
- *         schema:
- *           type: string
+ *         name: id
  *         required: true
- *         description: ユーザーのメールアドレス
+ *         schema:
+ *           type: integer
  *     responses:
  *       200:
  *         description: ユーザー情報
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/User'
  *       404:
  *         description: ユーザーが見つかりません
  */
-router.get('/:email', userController.getUserByEmail);
+router.get('/:id', getUser);
+
+/**
+ * @swagger
+ * /api/users/{id}:
+ *   put:
+ *     summary: ユーザー情報を更新
+ *     tags: [Users]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/User'
+ *     responses:
+ *       200:
+ *         description: ユーザーが更新されました
+ *       404:
+ *         description: ユーザーが見つかりません
+ */
+router.put('/:id', validateUser, updateUser);
+
+/**
+ * @swagger
+ * /api/users/{id}:
+ *   delete:
+ *     summary: ユーザーを削除
+ *     tags: [Users]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       204:
+ *         description: ユーザーが削除されました
+ *       404:
+ *         description: ユーザーが見つかりません
+ */
+router.delete('/:id', deleteUser);
 
 module.exports = router; 
