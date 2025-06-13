@@ -4,6 +4,11 @@ const userRoutes = require('./routes/userRoutes');
 
 const port = process.env.PORT || 3000;
 
+// ヘルスチェックエンドポイント
+app.get('/', (req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
+
 // ルートの設定
 app.use('/users', userRoutes);
 
