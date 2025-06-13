@@ -1,59 +1,40 @@
-const winston = require('winston');
-const { isProd, values } = require('../config/environment');
+const morgan = require('morgan');
+const { isProd } = require('../config/environment');
 
-// ロガーの設定
-const logger = winston.createLogger({
-  level: values[process.env.NODE_ENV || 'dev'].logLevel,
-  format: winston.format.combine(
-    winston.format.timestamp(),
-    winston.format.printf(({ timestamp, level, message, ...meta }) => {
-      return JSON.stringify({
-        timestamp,
-        level,
-        message,
-        ...meta
-      });
-    })
-  ),
-  transports: [
-    new winston.transports.File({ filename: 'error.log', level: 'error' }),
-    new winston.transports.File({ filename: 'combined.log' })
-  ]
+// カスタムトークンの定義
+morgan.token('response-time-ms', (req, res) => {
+  if (!res._header || !req._startAt) return '';
+  const diff = process.hrtime(req._startAt);
+  const ms = diff[0] * 1e3 + diff[1] * 1e-6;
+  return ms.toFixed(2);
 });
 
-// 開発環境とテスト環境でのみコンソールログを有効化
-if (!isProd) {
-  logger.add(new winston.transports.Console({
-    format: winston.format.combine(
-      winston.format.colorize(),
-      winston.format.printf(({ timestamp, level, message, ...meta }) => {
-        return JSON.stringify({
-          timestamp,
-          level,
-          message,
-          ...meta
-        });
-      })
-    )
-  }));
-}
+// カスタムフォーマット
+const format = isProd
+  ? ':remote-addr - :method :url :status :response-time-ms ms'
+  : ':method :url :status :response-time-ms ms - :res[content-length]';
 
 // リクエストロギングミドルウェア
-const requestLogger = (req, res, next) => {
-  const start = Date.now();
-  res.on('finish', () => {
-    const duration = Date.now() - start;
-    logger.info({
-      method: req.method,
-      url: req.url,
-      status: res.statusCode,
-      duration: `${duration}ms`
-    });
-  });
-  next();
-};
+const requestLogger = morgan(format, {
+  skip: (req, res) => res.statusCode >= 400,
+  stream: {
+    write: (message) => {
+      console.log(message.trim());
+    }
+  }
+});
+
+// エラーロギングミドルウェア
+const errorLogger = morgan(format, {
+  skip: (req, res) => res.statusCode < 400,
+  stream: {
+    write: (message) => {
+      console.error(message.trim());
+    }
+  }
+});
 
 module.exports = {
-  logger,
-  requestLogger
+  requestLogger,
+  errorLogger
 }; 

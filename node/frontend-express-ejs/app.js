@@ -14,6 +14,7 @@ app.get('/', async (req, res) => {
   try {
     const response = await axios.get('http://localhost:8080/api/users');
     const users = response.data.data.users;
+    console.log(users);
     
     res.render('index', { 
       title: 'ユーザー一覧',

@@ -3,7 +3,7 @@ const cors = require('cors');
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpecs = require('./swagger');
 const userRoutes = require('../routes/userRoutes');
-const { requestLogger } = require('../middleware/logger');
+const { requestLogger, errorLogger } = require('../middleware/logger');
 const { values } = require('./environment');
 require('dotenv').config();
 
@@ -14,7 +14,10 @@ app.use(cors({
   origin: values[process.env.NODE_ENV || 'dev'].corsOrigin
 }));
 app.use(express.json());
+
+// ロギングミドルウェア
 app.use(requestLogger);
+app.use(errorLogger);
 
 // ヘルスチェックエンドポイント
 app.get('/health', (req, res) => {
