@@ -150,3 +150,148 @@ const Environment = Object.freeze({
 * Thunder Client用のコレクションJSON
 
 なども用意できます。必要ですか？
+
+
+了解しました！`lowdb`ではなく、**Prisma + PostgreSQL** を使った構成に切り替えた上で、`routes/auth.js` に `/login` と `/me` をまとめた **PoC向けの軽量Express構成** を以下に提示します。
+
+---
+
+## ✅ ディレクトリ構成（PoC + Prisma構成）
+
+```
+starter-poc-api/
+├── app.js
+├── routes/
+│   └── auth.js
+├── prisma/
+│   └── schema.prisma
+├── .env
+├── package.json
+```
+
+---
+
+## ✅ Prismaモデル（`prisma/schema.prisma`）
+
+```prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+```
+
+---
+
+## ✅ .env
+
+```env
+DATABASE_URL="postgresql://postgres:password@localhost:5432/poc_db"
+PORT=3000
+```
+
+※ 必要に応じて `postgres`, `poc_db` の部分を変更してください。
+
+---
+
+## ✅ Prismaセットアップコマンド
+
+```bash
+npx prisma init        # 初回のみ
+npx prisma migrate dev --name init
+npx prisma generate
+```
+
+---
+
+## ✅ `routes/auth.js`
+
+```js
+const express = require('express');
+const router = express.Router();
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
+
+router.post('/login', async (req, res) => {
+  const { name } = req.body;
+  if (!name) return res.status(400).json({ error: 'name is required' });
+
+  const user = await prisma.user.findUnique({ where: { name } });
+  if (!user) return res.status(404).json({ error: 'User not found' });
+
+  res.cookie('user_id', user.id, { httpOnly: true });
+  return res.json({ message: 'login success', user: { id: user.id, name: user.name } });
+});
+
+router.get('/me', async (req, res) => {
+  const userId = req.cookies.user_id;
+  if (!userId) return res.status(401).json({ error: 'Not authenticated' });
+
+  const user = await prisma.user.findUnique({ where: { id: Number(userId) } });
+  if (!user) return res.status(404).json({ error: 'User not found' });
+
+  return res.json({ id: user.id, name: user.name });
+});
+
+module.exports = router;
+```
+
+---
+
+## ✅ `app.js`
+
+```js
+const express = require('express');
+const cookieParser = require('cookie-parser');
+const dotenv = require('dotenv');
+dotenv.config();
+
+const app = express();
+app.use(express.json());
+app.use(cookieParser());
+
+const authRoutes = require('./routes/auth');
+app.use(authRoutes);
+
+// ヘルスチェック
+app.get('/healthz/liveness', (_, res) => res.send('OK'));
+app.get('/healthz/readiness', (_, res) => res.send('OK'));
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`🚀 Server running at http://localhost:${PORT}`);
+});
+```
+
+---
+
+## ✅ 必要なパッケージ
+
+```bash
+npm install express cookie-parser dotenv @prisma/client
+npm install -D prisma
+```
+
+---
+
+## ✅ 補足
+
+このPoCは以下に最適です：
+
+* **JWT不要・軽量**
+* Prismaでマイグレーション管理も簡単
+* PostgreSQL + Express + Cookie運用を前提とした **現実的なPoC**
+
+---
+
+このまま zip テンプレートとして出力も可能です。必要であればお知らせください！また、Next.js側からの `/login` 呼び出しも視野に入れる場合、そのコードもご用意できます。
