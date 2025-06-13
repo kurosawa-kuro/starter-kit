@@ -1,13 +1,9 @@
 const request = require('supertest');
 const app = require('../config/app');
 const prisma = require('../config/prisma');
+const { testUser } = require('./testData');
 
 describe('User API', () => {
-  const testUser = {
-    email: 'test@example.com',
-    name: 'Test User'
-  };
-
   beforeEach(async () => {
     // テストデータのクリーンアップ
     await prisma.user.deleteMany();
