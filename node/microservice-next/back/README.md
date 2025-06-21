@@ -507,3 +507,102 @@ docker compose up -d rabbitmq
 [1]: https://microservices.io/post/architecture/2025/05/28/microservices-authn-authz-part-2-authentication.html "Authentication and authorization in a microservice architecture: Part 2 - Authentication"
 [2]: https://phaneendrakn.medium.com/microservices-design-patterns-series-part-4-5-bc8bce476226 "Microservices Design Patterns Series — Part 4/5 | by Phaneendra Kumar Namala | Medium"
 
+
+“Zod だけ書けば Swagger が出てくる”――ほぼ Yes
+――ただし「Zod ➜ OpenAPI を橋渡しするライブラリ」を 1 つ噛ませる必要があります。代表格は zod-to-openapi や zod-openapi などで、どちらも Zod スキーマに .openapi() メタデータを付けるだけで OpenAPI 3.1 JSON を生成できます。
+
+“A library that uses Zod schemas to generate an Open API Swagger documentation” 
+github.com
+
+“zod-openapi… use Zod schemas to generate OpenAPI v3.x documentation” 
+npmjs.com
+
+最小ステップ（zod-to-openapi 例）
+インストール
+
+bash
+コピーする
+編集する
+pnpm add zod @asteasolutions/zod-to-openapi swagger-ui-express
+Zod を拡張してスキーマ定義
+
+ts
+コピーする
+編集する
+// src/schemas/user.ts
+import { z } from 'zod';
+import { extendZodWithOpenApi } from '@asteasolutions/zod-to-openapi';
+
+extendZodWithOpenApi(z);              // ←★ これで .openapi() が生える
+
+export const User = z.object({
+  id:   z.string().openapi({ example: 'u_001' }),
+  name: z.string().openapi({ example: 'Alice' })
+}).openapi('User');
+経路（パス）を Registry に登録して JSON 生成
+
+ts
+コピーする
+編集する
+// src/lib/openapi.ts
+import { OpenAPIRegistry, generateOpenApiDocument } from '@asteasolutions/zod-to-openapi';
+import { User } from '@/schemas/user';
+
+const registry = new OpenAPIRegistry();
+
+// ルートを宣言 （Next.js の route ハンドラと 1 行ずれで書ける）
+registry.registerPath({
+  method: 'get',
+  path: '/users',
+  responses: {
+    200: { description: 'List', content: { 'application/json': { schema: User.array() } } }
+  }
+});
+
+export const spec = generateOpenApiDocument(registry, {
+  openapi: '3.1.0',
+  info: { title: 'Service-A API', version: '0.1.0' }
+});
+Swagger UI に渡すだけ
+
+ts
+コピーする
+編集する
+// src/app/api/docs/route.ts (Next.js App Router)
+import swagger from 'swagger-ui-express';
+import { spec } from '@/lib/openapi';
+
+export const runtime = 'nodejs';
+export const middleware = swagger.serve;
+export const handler    = swagger.setup(spec);
+ブラウザで /api/docs を開けば、新しく書いた Zod スキーマ／パスが即反映されます。
+Next.js を next dev で動かしている場合は ホットリロードで自動更新されるので “勝手に出来上がる” 体験になります。
+
+どこまで “自動” か？
+項目	必要作業	説明
+スキーマ	.openapi() を付けるだけ	型・バリデーション・例示を 1 箇所で定義
+エンドポイント	registry.registerPath() などで 1 行宣言	ルートを全自動検出する仕組みはまだ少数（Hono の @hono/zod-openapi など一部フレームワークは自動）
+Swagger 反映	generateOpenApiDocument() を呼ぶ	ビルド時（CI）にファイル出力することも、ランタイムで毎回生成することも可能
+
+つまり: “Zod 定義を書くだけ → Swagger UI 更新” は ほぼワンステップ。
+エンドポイントの登録だけは 1 行 追加するイメージです。
+
+ほかの選択肢と注意点
+ライブラリ	特徴	向いているケース
+@asteasolutions/zod-to-openapi	Registry パターンで柔軟。Webhook も書ける	Next.js / Express / Nest など汎用系
+zod-openapi	createDocument() の一括生成が簡単	小規模 API、ファイル生成派
+@hono/zod-openapi	ルート宣言を自動取得。Hono 専用	Hono フレームワーク利用時
+tsoa / NestJS Swagger	Decorator ベース (class, dto)	OOP / Nest 流儀のプロジェクト
+
+制限: Zod の transform() など一部タイプは OpenAPI に 1:1 変換できない（Unsupported list あり）。
+
+速度: 小規模ならランタイム生成で十分。大規模は CI で JSON/YAML を書き出して Nginx/Redocly に配信 が定番。
+
+TL;DR
+Zod + zod-to-openapi などを挟めば、スキーマを書く＝Swagger が更新の “単一ソース” が実現。
+
+ルート定義は 1 行 registerPath() するだけ（自動検出系フレームワークも増加中）。
+
+本番では生成物をファイル出力して Redocly / Swagger UI にホストするのが王道。
+
+これで「コードを書くだけでドキュメントが同期される」ワークフローが手に入ります。もし CI への組み込み例 や パス自動検出の新しいプラグイン など、さらに深掘りしたい部分があれば気軽にどうぞ！
