@@ -1,0 +1,154 @@
+# Makefile.test - テスト・カバレッジ・テストDB管理
+
+.PHONY: test test-only test-coverage test-coverage-report test-coverage-html test-color-setup install-gotestsum test-setup test-db-up test-db-status test-db-down test-swagger
+
+test-setup:
+	@echo "🔧 テスト用環境変数ファイルを生成中..."
+	@./script/gen-test-env.sh
+	@echo "🔧 テスト用DBを起動中..."
+	@docker compose -f docker/docker-compose.test.yml up -d db-test
+	@echo "⏳ DB起動を待機中..."
+	@sleep 10
+	@echo "✅ テスト用DBのセットアップ完了"
+
+test:
+	@echo "🧪 Docker DBを使用したテストを実行中..."
+	@if ! docker compose -f docker/docker-compose.test.yml ps db-test | grep -q "Up"; then \
+		echo "🔧 テスト用DBが起動していません。セットアップを実行します..."; \
+		$(MAKE) test-setup; \
+	fi
+	@echo "🧪 テストを実行中..."
+	@cd src && if PATH="$(PATH):$(HOME)/go/bin" command -v gotestsum > /dev/null; then \
+		GIN_MODE=test FORCE_COLOR=1 PATH="$(PATH):$(HOME)/go/bin" gotestsum --format=standard-verbose -- ./test/... -timeout 60s; \
+	else \
+		GIN_MODE=test GOTESTSUM_FORMAT=standard-verbose FORCE_COLOR=1 go test -v ./test/... -timeout 60s; \
+	fi
+
+test-only:
+	@echo "🧪 テストのみ実行中（DBの起動・停止なし）..."
+	@if ! docker compose -f docker/docker-compose.test.yml ps db-test | grep -q "Up"; then \
+		echo "❌ テスト用DBが起動していません。先に make test-setup を実行してください。"; \
+		exit 1; \
+	fi
+	@cd src && if PATH="$(PATH):$(HOME)/go/bin" command -v gotestsum > /dev/null; then \
+		GIN_MODE=test FORCE_COLOR=1 PATH="$(PATH):$(HOME)/go/bin" gotestsum --format=standard-verbose -- ./test/... -timeout 60s; \
+	else \
+		GIN_MODE=test GOTESTSUM_FORMAT=standard-verbose FORCE_COLOR=1 go test -v ./test/... -timeout 60s; \
+	fi
+
+test-color-setup:
+	@echo "🎨 カラー出力を有効にしています..."
+	@export FORCE_COLOR=1
+	@export GOTESTSUM_FORMAT=standard-verbose
+	@export GOFLAGS="-test.v"
+	@echo "✅ カラー出力が有効になりました"
+
+define show_total_coverage
+	@echo "🎯 全体カバレッジ率:"
+	@cd src && TOTAL_COVERAGE=$$(go tool cover -func=../coverage.out | grep "total:" | awk '{print $$3}' | sed 's/%//'); \
+	echo "📊 全体カバレッジ: $$TOTAL_COVERAGE%"; \
+	echo ""; \
+	echo "┌──────────────────────────────────────────────┐"; \
+	echo "│                📈 カバレッジサマリー           │"; \
+	echo "├──────────────────────────────────────────────┤"; \
+	if [ $$(echo "$$TOTAL_COVERAGE >= 90" | bc) -eq 1 ]; then \
+		echo "│  🟢 優秀なカバレッジ率です！ ($$TOTAL_COVERAGE%)           │"; \
+		echo "│     プロダクション品質のテストカバレッジを達成！         │"; \
+	elif [ $$(echo "$$TOTAL_COVERAGE >= 80" | bc) -eq 1 ]; then \
+		echo "│  🟡 良好なカバレッジ率です ($$TOTAL_COVERAGE%)             │"; \
+		echo "│     さらなる改善で優秀レベルを目指しましょう！           │"; \
+	elif [ $$(echo "$$TOTAL_COVERAGE >= 70" | bc) -eq 1 ]; then \
+		echo "│  🟠 改善の余地があります ($$TOTAL_COVERAGE%)               │"; \
+		echo "│     重要な機能のテストを追加してください                 │"; \
+	else \
+		echo "│  🔴 カバレッジ率が低すぎます ($$TOTAL_COVERAGE%)           │"; \
+		echo "│     テストを大幅に追加してください                       │"; \
+	fi; \
+	echo "└──────────────────────────────────────────────┘"; \
+	echo ""
+endef
+
+test-coverage:
+	@echo "🧪 カバレッジ付きテストを実行中..."
+	@if ! docker compose -f docker/docker-compose.test.yml ps db-test | grep -q "Up"; then \
+		echo "❌ テスト用DBが起動していません。先に make test-setup を実行してください。"; \
+		exit 1; \
+	fi
+	@cd src && echo "💡 WSL環境ではgotestsumのカラー出力が制限される場合があります"; \
+	GIN_MODE=test GOFLAGS="-test.v" GOTESTSUM_FORMAT=standard-verbose FORCE_COLOR=1 go test -v -coverprofile=../coverage.out ./services ./models ./handler ./middleware ./router ./config ./utils -timeout 60s | sed 's/^PASS$$/✅ PASS/; s/^FAIL$$/❌ FAIL/; s/^RUN$$/🏃 RUN/; s/^--- PASS: /✅ PASS: /; s/^--- FAIL: /❌ FAIL: /; s/^coverage: \([0-9.]*\)% of statements/📊 coverage: \1% of statements/; s/^=== RUN/🏃 === RUN/; s/^DONE \([0-9]*\) tests in \([0-9.]*s\)/🎉 DONE \1 tests in \2s/'
+	@echo ""
+	$(show_total_coverage)
+	@echo ""
+	@echo "📊 パッケージ別カバレッジ:"
+	@cd src && go tool cover -func=../coverage.out | grep -E "(services|models|handler|middleware|router|config|utils)" | sed 's/backend\//📦 /' | sed 's/\.go:/: /' | sed 's/(statements)/ステートメント/'
+
+test-coverage-report:
+	@echo "🧪 カバレッジレポートを生成中..."
+	@if ! docker compose -f docker/docker-compose.test.yml ps db-test | grep -q "Up"; then \
+		echo "❌ テスト用DBが起動していません。先に make test-setup を実行してください。"; \
+		exit 1; \
+	fi
+	@cd src && if PATH="$(PATH):$(HOME)/go/bin" command -v gotestsum > /dev/null; then \
+		GIN_MODE=test FORCE_COLOR=1 PATH="$(PATH):$(HOME)/go/bin" gotestsum --format=standard-verbose -- -coverprofile=../coverage.out ./services ./models ./handler ./middleware ./router ./config ./utils -timeout 60s; \
+	else \
+		GIN_MODE=test GOTESTSUM_FORMAT=standard-verbose FORCE_COLOR=1 go test -v -coverprofile=../coverage.out ./services ./models ./handler ./middleware ./router ./config ./utils -timeout 60s; \
+	fi
+	@echo "📊 カバレッジレポートを生成しました: coverage.out"
+	@echo "📈 カバレッジ詳細を表示:"
+	@cd src && go tool cover -func=../coverage.out
+
+test-coverage-html:
+	@echo "🧪 HTMLカバレッジレポートを生成中..."
+	@if ! docker compose -f docker/docker-compose.test.yml ps db-test | grep -q "Up"; then \
+		echo "❌ テスト用DBが起動していません。先に make test-setup を実行してください。"; \
+		exit 1; \
+	fi
+	@cd src && if PATH="$(PATH):$(HOME)/go/bin" command -v gotestsum > /dev/null; then \
+		GIN_MODE=test FORCE_COLOR=1 PATH="$(PATH):$(HOME)/go/bin" gotestsum --format=standard-verbose -- -coverprofile=../coverage.out ./services ./models ./handler ./middleware ./router ./config ./utils -timeout 60s; \
+	else \
+		GIN_MODE=test GOTESTSUM_FORMAT=standard-verbose FORCE_COLOR=1 go test -v -coverprofile=../coverage.out ./services ./models ./handler ./middleware ./router ./config ./utils -timeout 60s; \
+	fi
+	@echo "📊 HTMLカバレッジレポートを生成中..."
+	@cd src && go tool cover -html=../coverage.out -o ../coverage.html
+	@echo "✅ HTMLカバレッジレポートを生成しました: coverage.html"
+	@echo "🌐 ブラウザで開く: open coverage.html または coverage.html をダブルクリック"
+
+install-gotestsum:
+	@echo "📦 gotestsumをインストール中..."
+	@if ! command -v gotestsum > /dev/null; then \
+		go install gotest.tools/gotestsum@latest; \
+		echo "✅ gotestsumのインストール完了"; \
+	else \
+		echo "✅ gotestsumは既にインストール済み"; \
+	fi
+	@echo "🔧 PATHに~/go/binを追加中..."
+	@if ! grep -q "export PATH=\$PATH:\$HOME/go/bin" ~/.bashrc; then \
+		echo 'export PATH=$PATH:$HOME/go/bin' >> ~/.bashrc; \
+		echo "✅ PATH設定を~/.bashrcに追加しました"; \
+		echo "🔄 新しいターミナルを開くか、source ~/.bashrc を実行してください"; \
+	else \
+		echo "✅ PATH設定は既に~/.bashrcに含まれています"; \
+	fi
+	@echo "🎨 カラー出力を有効にするために、以下のコマンドを実行してください:"
+	@echo "   export FORCE_COLOR=1"
+	@echo "   export GOTESTSUM_FORMAT=standard-verbose"
+
+test-swagger:
+	@echo "🧪 Swaggerテストを実行中..."
+	@cd src && if PATH="$(PATH):$(HOME)/go/bin" command -v gotestsum > /dev/null; then \
+		GIN_MODE=test FORCE_COLOR=1 PATH="$(PATH):$(HOME)/go/bin" gotestsum --format=standard-verbose -- ./test/... -run "TestSwagger"; \
+	else \
+		GIN_MODE=test GOTESTSUM_FORMAT=standard-verbose FORCE_COLOR=1 go test -v ./test/... -run "TestSwagger"; \
+	fi
+
+test-db-up:
+	@echo "🐳 テスト用DBを起動中..."
+	docker compose -f docker/docker-compose.test.yml up -d db-test
+
+test-db-status:
+	@echo "🔍 テスト用DBの状態を確認中..."
+	@docker compose -f docker/docker-compose.test.yml ps db-test
+
+test-db-down:
+	@echo "🐳 テスト用DBを停止中..."
+	docker compose -f docker/docker-compose.test.yml down 

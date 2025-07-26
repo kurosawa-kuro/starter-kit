@@ -1,0 +1,35 @@
+# Makefile.build - ビルド・フォーマット・依存管理
+
+.PHONY: build run build-prod fmt deps clean
+
+build:
+	@echo "🔨 Hello World API をビルド中..."
+	cd src && go build -o ../bin/hello-world-api main.go
+	@echo "✅ ビルド完了: bin/hello-world-api"
+
+run:
+	@echo "🚀 Hello World API を起動中..."
+	cd src && go run main.go
+
+build-prod:
+	@echo "🏭 本番用ビルド中..."
+	cd src && CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o ../bin/hello-world-api main.go
+	@echo "✅ 本番用ビルド完了: bin/hello-world-api"
+
+fmt:
+	@echo "🎨 コードをフォーマット中..."
+	go fmt ./...
+	@echo "✅ フォーマット完了"
+
+deps:
+	@echo "📦 依存関係を更新中..."
+	go mod tidy
+	go mod download
+	@echo "✅ 依存関係更新完了"
+
+clean:
+	@echo "🧹 ビルドファイルをクリーン中..."
+	rm -rf bin/
+	rm -f coverage.out coverage.html
+	go clean
+	@echo "✅ クリーン完了" 

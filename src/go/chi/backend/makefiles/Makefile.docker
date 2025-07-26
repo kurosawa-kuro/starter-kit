@@ -1,0 +1,23 @@
+# Makefile.docker - Docker関連
+
+.PHONY: docker docker-bg docker-down swagger
+
+docker:
+	@echo "🐳 Docker Composeで起動中..."
+	docker compose -f docker/docker-compose.yml up --build
+
+docker-bg:
+	@echo "🐳 Docker Composeでバックグラウンド起動中..."
+	docker compose -f docker/docker-compose.yml up -d --build
+
+docker-down:
+	@echo "🐳 Docker Composeで停止中..."
+	docker compose -f docker/docker-compose.yml down
+
+swagger:
+	@echo "📖 Swaggerドキュメントを生成中..."
+	@if command -v swag > /dev/null; then \
+		cd src && swag init -g main.go; \
+	else \
+		echo "⚠️  swag がインストールされていません。go install github.com/swaggo/swag/cmd/swag@latest を実行してください。"; \
+	fi 
