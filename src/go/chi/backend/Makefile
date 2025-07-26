@@ -13,6 +13,8 @@ help:
 	@echo "  make test-coverage - テスト実行（カバレッジ付き）"
 	@echo "  make test-coverage-report - カバレッジレポート生成"
 	@echo "  make test-coverage-html - HTMLカバレッジレポート生成"
+	@echo "  make test-color-setup - カラー出力を有効にする"
+	@echo "  make install-gotestsum - gotestsumをインストール（カラフルなテスト出力）"
 	@echo "  make test-setup - テスト用DBのセットアップ（初回のみ実行）"
 	@echo "  make test-db-status - テスト用DBの状態確認"
 	@echo "  make test-db-up   - テスト用DBを起動"
@@ -60,7 +62,11 @@ test:
 		$(MAKE) test-setup; \
 	fi
 	@echo "🧪 テストを実行中..."
-	@cd src && GIN_MODE=test go test -v ./test/... -timeout 60s
+	@cd src && if PATH="$(PATH):$(HOME)/go/bin" command -v gotestsum > /dev/null; then \
+		GIN_MODE=test FORCE_COLOR=1 PATH="$(PATH):$(HOME)/go/bin" gotestsum --format=standard-verbose -- ./test/... -timeout 60s; \
+	else \
+		GIN_MODE=test GOTESTSUM_FORMAT=standard-verbose FORCE_COLOR=1 go test -v ./test/... -timeout 60s; \
+	fi
 
 # テストのみ実行（DBの起動・停止なし）
 test-only:
@@ -69,7 +75,19 @@ test-only:
 		echo "❌ テスト用DBが起動していません。先に make test-setup を実行してください。"; \
 		exit 1; \
 	fi
-	@cd src && GIN_MODE=test go test -v ./test/... -timeout 60s
+	@cd src && if PATH="$(PATH):$(HOME)/go/bin" command -v gotestsum > /dev/null; then \
+		GIN_MODE=test FORCE_COLOR=1 PATH="$(PATH):$(HOME)/go/bin" gotestsum --format=standard-verbose -- ./test/... -timeout 60s; \
+	else \
+		GIN_MODE=test GOTESTSUM_FORMAT=standard-verbose FORCE_COLOR=1 go test -v ./test/... -timeout 60s; \
+	fi
+
+# カラー出力を有効にする
+test-color-setup:
+	@echo "🎨 カラー出力を有効にしています..."
+	@export FORCE_COLOR=1
+	@export GOTESTSUM_FORMAT=standard-verbose
+	@export GOFLAGS="-test.v"
+	@echo "✅ カラー出力が有効になりました"
 
 # テスト実行（カバレッジ付き）
 test-coverage:
@@ -78,7 +96,8 @@ test-coverage:
 		echo "❌ テスト用DBが起動していません。先に make test-setup を実行してください。"; \
 		exit 1; \
 	fi
-	@cd src && GIN_MODE=test go test -v -cover ./services ./models ./handler ./middleware ./router ./config ./utils -timeout 60s
+	@cd src && echo "💡 WSL環境ではgotestsumのカラー出力が制限される場合があります"; \
+	GIN_MODE=test GOFLAGS="-test.v" GOTESTSUM_FORMAT=standard-verbose FORCE_COLOR=1 go test -v -cover ./services ./models ./handler ./middleware ./router ./config ./utils -timeout 60s | sed 's/^PASS$$/✅ PASS/; s/^FAIL$$/❌ FAIL/; s/^RUN$$/🏃 RUN/; s/^--- PASS: /✅ PASS: /; s/^--- FAIL: /❌ FAIL: /; s/^coverage: \([0-9.]*\)% of statements/📊 coverage: \1% of statements/; s/^=== RUN/🏃 === RUN/; s/^DONE \([0-9]*\) tests in \([0-9.]*s\)/🎉 DONE \1 tests in \2s/'
 
 # テスト実行（カバレッジレポート生成）
 test-coverage-report:
@@ -87,7 +106,11 @@ test-coverage-report:
 		echo "❌ テスト用DBが起動していません。先に make test-setup を実行してください。"; \
 		exit 1; \
 	fi
-	@cd src && GIN_MODE=test go test -v -coverprofile=../coverage.out ./services ./models ./handler ./middleware ./router ./config ./utils -timeout 60s
+	@cd src && if PATH="$(PATH):$(HOME)/go/bin" command -v gotestsum > /dev/null; then \
+		GIN_MODE=test FORCE_COLOR=1 PATH="$(PATH):$(HOME)/go/bin" gotestsum --format=standard-verbose -- -coverprofile=../coverage.out ./services ./models ./handler ./middleware ./router ./config ./utils -timeout 60s; \
+	else \
+		GIN_MODE=test GOTESTSUM_FORMAT=standard-verbose FORCE_COLOR=1 go test -v -coverprofile=../coverage.out ./services ./models ./handler ./middleware ./router ./config ./utils -timeout 60s; \
+	fi
 	@echo "📊 カバレッジレポートを生成しました: coverage.out"
 	@echo "📈 カバレッジ詳細を表示:"
 	@cd src && go tool cover -func=../coverage.out
@@ -99,7 +122,11 @@ test-coverage-html:
 		echo "❌ テスト用DBが起動していません。先に make test-setup を実行してください。"; \
 		exit 1; \
 	fi
-	@cd src && GIN_MODE=test go test -v -coverprofile=../coverage.out ./services ./models ./handler ./middleware ./router ./config ./utils -timeout 60s
+	@cd src && if PATH="$(PATH):$(HOME)/go/bin" command -v gotestsum > /dev/null; then \
+		GIN_MODE=test FORCE_COLOR=1 PATH="$(PATH):$(HOME)/go/bin" gotestsum --format=standard-verbose -- -coverprofile=../coverage.out ./services ./models ./handler ./middleware ./router ./config ./utils -timeout 60s; \
+	else \
+		GIN_MODE=test GOTESTSUM_FORMAT=standard-verbose FORCE_COLOR=1 go test -v -coverprofile=../coverage.out ./services ./models ./handler ./middleware ./router ./config ./utils -timeout 60s; \
+	fi
 	@echo "📊 HTMLカバレッジレポートを生成中..."
 	@cd src && go tool cover -html=../coverage.out -o ../coverage.html
 	@echo "✅ HTMLカバレッジレポートを生成しました: coverage.html"
@@ -119,6 +146,27 @@ deps:
 	go mod tidy
 	go mod download
 	@echo "✅ 依存関係更新完了"
+
+# gotestsumをインストール（カラフルなテスト出力用）
+install-gotestsum:
+	@echo "📦 gotestsumをインストール中..."
+	@if ! command -v gotestsum > /dev/null; then \
+		go install gotest.tools/gotestsum@latest; \
+		echo "✅ gotestsumのインストール完了"; \
+	else \
+		echo "✅ gotestsumは既にインストール済み"; \
+	fi
+	@echo "🔧 PATHに~/go/binを追加中..."
+	@if ! grep -q "export PATH=\$PATH:\$HOME/go/bin" ~/.bashrc; then \
+		echo 'export PATH=$PATH:$HOME/go/bin' >> ~/.bashrc; \
+		echo "✅ PATH設定を~/.bashrcに追加しました"; \
+		echo "🔄 新しいターミナルを開くか、source ~/.bashrc を実行してください"; \
+	else \
+		echo "✅ PATH設定は既に~/.bashrcに含まれています"; \
+	fi
+	@echo "🎨 カラー出力を有効にするために、以下のコマンドを実行してください:"
+	@echo "   export FORCE_COLOR=1"
+	@echo "   export GOTESTSUM_FORMAT=standard-verbose"
 
 # 環境変数ファイルの管理
 env-init:
@@ -193,7 +241,11 @@ swagger:
 # Swaggerテストを実行
 test-swagger:
 	@echo "🧪 Swaggerテストを実行中..."
-	go test -v ./test/... -run "TestSwagger"
+	@cd src && if PATH="$(PATH):$(HOME)/go/bin" command -v gotestsum > /dev/null; then \
+		GIN_MODE=test FORCE_COLOR=1 PATH="$(PATH):$(HOME)/go/bin" gotestsum --format=standard-verbose -- ./test/... -run "TestSwagger"; \
+	else \
+		GIN_MODE=test GOTESTSUM_FORMAT=standard-verbose FORCE_COLOR=1 go test -v ./test/... -run "TestSwagger"; \
+	fi
 
 # テスト用DBを起動
 test-db-up:
