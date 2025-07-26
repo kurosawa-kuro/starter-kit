@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"backend/config"
+	_ "backend/docs" // Swagger docs
 	"backend/handler"
 	"backend/router"
 )

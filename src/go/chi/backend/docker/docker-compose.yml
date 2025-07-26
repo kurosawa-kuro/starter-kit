@@ -1,11 +1,13 @@
 services:
   backend:
-    build: .
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
     container_name: hello_backend
     ports:
       - "8080:8080"
     env_file:
-      - ../config/env.sample
+      - ../config/env.development
     depends_on:
       - db
     environment:

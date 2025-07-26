@@ -6,17 +6,12 @@ WORKDIR /app
 
 # Go modulesファイルをコピー
 COPY src/go.mod src/go.sum ./
-COPY config/ ./config/
 
 # 依存関係をダウンロード
 RUN go mod download
 
-# ソースコードをコピー
-COPY . .
-
-# Swagger docsを生成
-RUN go install github.com/swaggo/swag/cmd/swag@latest
-RUN cd src && swag init -g main.go
+# ソースコードをコピー（事前に生成されたSwaggerドキュメントを含む）
+COPY src/ ./src/
 
 # アプリケーションをビルド
 RUN cd src && CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main main.go
@@ -31,6 +26,9 @@ WORKDIR /root/
 
 # ビルドステージからバイナリをコピー
 COPY --from=builder /app/src/main .
+
+# Swaggerドキュメントをコピー
+COPY --from=builder /app/src/docs ./docs
 
 # ポート8080を公開
 EXPOSE 8080

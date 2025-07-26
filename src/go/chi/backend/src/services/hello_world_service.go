@@ -2,6 +2,7 @@ package services
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 
@@ -32,6 +33,10 @@ func (s *HelloWorldService) CreateHelloWorld(request *models.HelloWorldRequest) 
 	// バリデーション
 	if err := request.Validate(); err != nil {
 		return nil, err
+	}
+
+	if s.db == nil {
+		return nil, errors.New("database connection is not available")
 	}
 
 	// データベースに保存
@@ -68,6 +73,10 @@ func (s *HelloWorldService) CreateHelloWorld(request *models.HelloWorldRequest) 
 
 // GetHelloWorldMessages 全てのHello Worldメッセージを取得
 func (s *HelloWorldService) GetHelloWorldMessages() ([]models.HelloWorldMessage, error) {
+	if s.db == nil {
+		return nil, errors.New("database connection is not available")
+	}
+
 	query := `
 		SELECT id, name, message, created_at, updated_at
 		FROM hello_world_messages
@@ -105,6 +114,10 @@ func (s *HelloWorldService) GetHelloWorldMessages() ([]models.HelloWorldMessage,
 
 // GetHelloWorldMessageByID IDでHello Worldメッセージを取得
 func (s *HelloWorldService) GetHelloWorldMessageByID(id int) (*models.HelloWorldMessage, error) {
+	if s.db == nil {
+		return nil, errors.New("database connection is not available")
+	}
+
 	query := `
 		SELECT id, name, message, created_at, updated_at
 		FROM hello_world_messages

@@ -24,9 +24,32 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/": {
+            "get": {
+                "description": "アプリケーション情報を取得",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "root"
+                ],
+                "summary": "ルートエンドポイント",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.BaseResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/health": {
             "get": {
-                "description": "アプリケーションの健康状態を確認します",
+                "description": "アプリケーションの状態を確認",
                 "consumes": [
                     "application/json"
                 ],
@@ -41,7 +64,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/handler.HealthResponse"
+                            "$ref": "#/definitions/models.BaseResponse"
                         }
                     }
                 }
@@ -49,7 +72,7 @@ const docTemplate = `{
         },
         "/api/hello-world": {
             "get": {
-                "description": "「Hello, World!」メッセージを返します",
+                "description": "Hello Worldメッセージを取得",
                 "consumes": [
                     "application/json"
                 ],
@@ -59,18 +82,30 @@ const docTemplate = `{
                 "tags": [
                     "hello-world"
                 ],
-                "summary": "Hello Worldを取得",
+                "summary": "Hello World取得",
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/handler.HelloWorldResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/models.SuccessResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/models.HelloWorldResponse"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     }
                 }
             },
             "post": {
-                "description": "リクエストボディのJSONを受け取り、DBに保存してそのまま返します",
+                "description": "Hello Worldメッセージを作成",
                 "consumes": [
                     "application/json"
                 ],
@@ -80,37 +115,147 @@ const docTemplate = `{
                 "tags": [
                     "hello-world"
                 ],
-                "summary": "JSONを受け取り、DBに保存して返す",
+                "summary": "Hello World作成",
                 "parameters": [
                     {
-                        "description": "リクエストボディ",
+                        "description": "Hello World Request",
                         "name": "request",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.HelloWorldRequest"
+                            "$ref": "#/definitions/models.HelloWorldRequest"
                         }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/models.SuccessResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/models.HelloWorldMessage"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/hello-world/messages": {
+            "get": {
+                "description": "全てのHello Worldメッセージを取得",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "hello-world"
+                ],
+                "summary": "Hello Worldメッセージ一覧取得",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/models.SuccessResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/models.HelloWorldMessage"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/hello-world/messages/{id}": {
+            "get": {
+                "description": "指定されたIDのHello Worldメッセージを取得",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "hello-world"
+                ],
+                "summary": "Hello Worldメッセージ取得（ID指定）",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Message ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/services.HelloWorldMessage"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/models.SuccessResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/models.HelloWorldMessage"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
-                    "400": {
-                        "description": "Bad Request",
+                    "404": {
+                        "description": "Not Found",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/models.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/models.ErrorResponse"
                         }
                     }
                 }
@@ -118,7 +263,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "handler.HealthResponse": {
+        "models.BaseResponse": {
             "type": "object",
             "properties": {
                 "message": {
@@ -132,32 +277,24 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.HelloWorldRequest": {
+        "models.ErrorResponse": {
             "type": "object",
-            "required": [
-                "name"
-            ],
             "properties": {
-                "name": {
+                "error": {
                     "type": "string"
-                }
-            }
-        },
-        "handler.HelloWorldResponse": {
-            "type": "object",
-            "properties": {
+                },
                 "message": {
+                    "type": "string"
+                },
+                "status": {
                     "type": "string"
                 },
                 "timestamp": {
                     "type": "string"
-                },
-                "version": {
-                    "type": "string"
                 }
             }
         },
-        "services.HelloWorldMessage": {
+        "models.HelloWorldMessage": {
             "type": "object",
             "properties": {
                 "created_at": {
@@ -176,6 +313,43 @@ const docTemplate = `{
                     "type": "string"
                 }
             }
+        },
+        "models.HelloWorldRequest": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.HelloWorldResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "timestamp": {
+                    "type": "string"
+                },
+                "version": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.SuccessResponse": {
+            "type": "object",
+            "properties": {
+                "data": {},
+                "message": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "timestamp": {
+                    "type": "string"
+                }
+            }
         }
     }
 }`
@@ -186,8 +360,8 @@ var SwaggerInfo = &swag.Spec{
 	Host:             "localhost:8080",
 	BasePath:         "/",
 	Schemes:          []string{"http", "https"},
-	Title:            "Hello World API",
-	Description:      "Go + Gin スタータープロジェクトのAPI仕様書",
+	Title:            "Go + Chi Starter Project API",
+	Description:      "Go + Chi スタータープロジェクトのAPI仕様書",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 }
