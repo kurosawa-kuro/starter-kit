@@ -1,0 +1,50 @@
+# Spring Boot Application Configuration
+spring:
+  application:
+    name: helloworld-api
+  
+  # Server configuration
+  server:
+    port: 8080
+    servlet:
+      context-path: /
+  
+  # Jackson configuration for JSON processing
+  jackson:
+    default-property-inclusion: non_null
+    serialization:
+      write-dates-as-timestamps: false
+    deserialization:
+      fail-on-unknown-properties: false
+
+# Actuator configuration for health checks and monitoring
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
+  info:
+    env:
+      enabled: true
+
+# Logging configuration
+logging:
+  level:
+    com.example.helloworld: INFO
+    org.springframework.web: INFO
+    org.springframework.boot: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/helloworld-api.log
+
+# Application specific configuration
+app:
+  info:
+    name: Hello World API
+    version: 1.0.0
+    description: A simple Spring Boot Hello World API 

@@ -18,7 +18,7 @@
 1. **RESTful API**: 基本的なCRUD操作
 2. **ヘルスチェック**: アプリケーション状態監視
 3. **エラーハンドリング**: 統一されたエラーレスポンス
-4. **モックモード**: データベースなしでの動作
+
 5. **環境設定**: 柔軟な環境変数管理
 6. **ログ出力**: 構造化されたログ
 7. **API文書**: 自動生成されるSwagger文書
@@ -44,7 +44,7 @@ src/
 │   └── hello_world_service.go # Hello Worldサービス
 ├── utils/            # ユーティリティ
 │   ├── constants.go  # 定数定義
-│   └── mock.go       # モックデータ
+
 ├── docs/             # Swagger文書（自動生成）
 ├── main.go           # アプリケーションエントリーポイント
 ├── go.mod            # Goモジュール定義
@@ -193,25 +193,7 @@ CREATE TABLE hello_world_messages (
 );
 ```
 
-### 6. モックモード仕様
 
-#### モックデータ構造
-```go
-type MockData struct {
-    // モックデータ管理
-}
-
-func (m *MockData) GetMockHelloWorldMessage(name string) *HelloWorldMessage {
-    // モックデータ生成
-}
-```
-
-#### モックモード判定
-```go
-if s.db == nil || s.db.DB == nil {
-    return s.mockData.GetMockHelloWorldMessage(name), nil
-}
-```
 
 ### 7. ログ仕様
 
@@ -230,7 +212,7 @@ if s.db == nil || s.db.DB == nil {
 ### 8. テスト仕様
 
 #### テスト構造
-- **単体テスト**: モックデータ使用
+- **単体テスト**: テストデータ使用
 - **統合テスト**: 実際のデータベース使用
 - **E2Eテスト**: 完全なワークフロー
 
@@ -286,7 +268,7 @@ CMD ["./main"]
 - **ヘルスチェック**: < 1ms
 - **Hello World GET**: < 1ms
 - **Hello World POST**: < 5ms (データベースあり)
-- **Hello World POST**: < 1ms (モックモード)
+- **Hello World POST**: < 5ms
 
 ### リソース使用量
 - **メモリ**: < 50MB
@@ -364,7 +346,7 @@ CMD ["./main"]
 - [ ] エラーハンドリングの実装
 - [ ] レスポンス形式の統一
 - [ ] データベース接続の実装
-- [ ] モックモードの実装
+
 - [ ] テストの実装
 - [ ] ログ出力の実装
 - [ ] API文書の生成

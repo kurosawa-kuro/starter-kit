@@ -18,7 +18,7 @@
 1. **RESTful API**: 基本的なCRUD操作
 2. **ヘルスチェック**: アプリケーション状態監視
 3. **エラーハンドリング**: 統一されたエラーレスポンス
-4. **モックモード**: データベースなしでの動作
+
 5. **環境設定**: 柔軟な環境変数管理
 6. **ログ出力**: 構造化されたログ
 7. **API文書**: 自動生成されるSwagger文書
@@ -44,7 +44,7 @@ src/
 │   └── helloWorldService.js # Hello Worldサービス
 ├── utils/            # ユーティリティ
 │   ├── constants.js  # 定数定義
-│   └── mock.js       # モックデータ
+
 ├── docs/             # Swagger文書（自動生成）
 ├── app.js            # アプリケーションエントリーポイント
 ├── package.json      # Node.js依存関係管理
@@ -203,29 +203,7 @@ CREATE TABLE hello_world_messages (
 );
 ```
 
-### 6. モックモード仕様
 
-#### モックデータ構造
-```javascript
-class MockData {
-    getMockHelloWorldMessage(name) {
-        return {
-            id: 1,
-            name: name || 'World',
-            message: `Hello, ${name || 'World'}!`,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-        };
-    }
-}
-```
-
-#### モックモード判定
-```javascript
-if (!this.db || !this.db.connected) {
-    return this.mockData.getMockHelloWorldMessage(name);
-}
-```
 
 ### 7. ログ仕様
 
@@ -244,7 +222,7 @@ if (!this.db || !this.db.connected) {
 ### 8. テスト仕様
 
 #### テスト構造
-- **単体テスト**: モックデータ使用
+- **単体テスト**: テストデータ使用
 - **統合テスト**: 実際のデータベース使用
 - **E2Eテスト**: 完全なワークフロー
 
@@ -311,7 +289,7 @@ CMD ["npm", "start"]
 - **ヘルスチェック**: < 5ms
 - **Hello World GET**: < 5ms
 - **Hello World POST**: < 10ms (データベースあり)
-- **Hello World POST**: < 5ms (モックモード)
+- **Hello World POST**: < 10ms
 
 ### リソース使用量
 - **メモリ**: < 100MB
@@ -389,7 +367,7 @@ CMD ["npm", "start"]
 - [ ] エラーハンドリングの実装
 - [ ] レスポンス形式の統一
 - [ ] データベース接続の実装
-- [ ] モックモードの実装
+
 - [ ] テストの実装
 - [ ] ログ出力の実装
 - [ ] API文書の生成
