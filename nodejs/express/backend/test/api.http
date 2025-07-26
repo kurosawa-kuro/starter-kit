@@ -1,0 +1,55 @@
+### Express Hello World API - HTTP Tests
+### 変数定義
+@baseUrl = http://localhost:8080
+@contentType = application/json
+
+### 1. アプリケーション情報
+GET {{baseUrl}}/
+Content-Type: {{contentType}}
+
+### 2. 基本的なHello Worldメッセージ
+GET {{baseUrl}}/api/hello-world
+Content-Type: {{contentType}}
+
+### 3. パーソナライズされたHelloメッセージ
+GET {{baseUrl}}/api/hello-world?name=John
+Content-Type: {{contentType}}
+
+### 4. Hello Worldメッセージの追加
+POST {{baseUrl}}/api/hello-world
+Content-Type: {{contentType}}
+
+{
+  "name": "Alice",
+  "message": "Welcome to our Express API!"
+}
+
+### 5. Hello Worldメッセージ一覧の取得
+GET {{baseUrl}}/api/hello-world/list
+Content-Type: {{contentType}}
+
+### 6. ヘルスチェック
+GET {{baseUrl}}/api/health
+Content-Type: {{contentType}}
+
+### 7. API文書
+GET {{baseUrl}}/api-docs
+Content-Type: {{contentType}}
+
+### 8. バリデーションテスト（無効なリクエスト）
+POST {{baseUrl}}/api/hello-world
+Content-Type: {{contentType}}
+
+{
+  "name": "",
+  "message": "This should fail validation"
+}
+
+### 9. 長い名前のテスト
+POST {{baseUrl}}/api/hello-world
+Content-Type: {{contentType}}
+
+{
+  "name": "VeryLongNameThatExceedsTheMaximumLengthLimitForValidationTesting",
+  "message": "Test message"
+} 
