@@ -1,1 +1,3 @@
-go/gin/backend/.env.local.backup.20250726_015811
+go/gin/backend/.env.*
+*/bin/*
+*/bin/*
