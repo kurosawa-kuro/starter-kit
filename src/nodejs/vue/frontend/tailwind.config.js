@@ -14,6 +14,10 @@ export default {
           700: '#1d4ed8',
         },
       },
+      screens: {
+        'lg': '1024px',
+        'md': '768px',
+      },
     },
   },
   plugins: [],
