@@ -30,28 +30,56 @@ src/
 
 ### Go + Chi Backend (src/go/chi/backend/)
 ```bash
-make build       # Build the application
-make run         # Run the application
-make test        # Run tests with test database (uses Docker)
-make test-local  # Run tests with Docker test DB
-make dev         # Run with hot reload (requires air)
-make swagger     # Generate Swagger documentation (requires swag)
-make fmt         # Format code
-make lint        # Run linter (requires golangci-lint)
-make docker      # Run with Docker Compose
-make docker-bg   # Run with Docker Compose in background
-make docker-down # Stop Docker Compose
+# Build and Run
+make build         # Build the application (outputs to bin/hello-world-api)
+make build-prod    # Production build (CGO_ENABLED=0, Linux)
+make run           # Run the application
+make dev           # Run with hot reload (requires air - install with: go install github.com/cosmtrek/air@latest)
+make clean         # Clean build artifacts
 
-# Environment management
-make env-init ENV=development  # Initialize environment file
-make env-validate             # Validate environment files
-make env-backup               # Backup environment files
-make env-restore FILE=backup  # Restore from backup
+# Testing (Docker-based test DB on port 15434)
+make test          # Run tests (auto-starts test DB if needed)
+make test-only     # Run tests without starting/stopping DB (faster)
+make test-setup    # Initial test setup (creates test DB)
+make test-coverage # Run tests with coverage and display summary
+make test-coverage-html # Generate HTML coverage report
+make test-db-up    # Manually start test database
+make test-db-down  # Manually stop test database
+make test-swagger  # Run Swagger-specific tests
+
+# Docker Operations
+make docker        # Run with Docker Compose (foreground)
+make docker-bg     # Run with Docker Compose (background)
+make docker-down   # Stop Docker Compose
+
+# Code Quality
+make fmt           # Format code (go fmt)
+make swagger       # Generate Swagger docs (requires: go install github.com/swaggo/swag/cmd/swag@latest)
+make deps          # Update dependencies (go mod tidy)
+
+# Environment Management
+make env-init ENV=development  # Initialize environment file from template
+make env-validate             # Validate all environment files
+make env-backup               # Backup current environment files
+make env-restore FILE=backup  # Restore from backup file
 make env-list                 # List available environments
 
-# Test-specific commands
-make test-db-up   # Start test database only
-make test-db-down # Stop test database
+# Test Utilities
+make install-gotestsum  # Install gotestsum for better test output
+make test-color-setup   # Configure terminal for colored test output
+```
+
+### Running a Single Test
+```bash
+cd src
+# Run a specific test file
+go test -v ./test/hello_world_test.go
+
+# Run tests matching a pattern
+go test -v ./... -run TestHealthCheck
+
+# Run tests in a specific package
+go test -v ./handler/...
 ```
 
 ### Go + Gin Backend (src/go/gin/backend/)
@@ -218,10 +246,58 @@ All API responses follow a consistent structure:
 ```
 
 ### Testing Strategy
-- Tests use a separate PostgreSQL instance via Docker Compose
-- Environment variables are automatically configured for test runs
-- Test database is automatically started/stopped during test execution
-- Support for multiple testing approaches (standard Go tests, BDD-style tests, API contract tests)
+- Tests use a separate PostgreSQL instance via Docker Compose on port 15434
+- Environment variables are automatically configured from config/env.test
+- Test database remains running between test executions for speed
+- Supports multiple testing libraries:
+  - **testify**: Standard assertions and mocking
+  - **httpexpect**: Fluent API for HTTP testing
+  - **apitest**: BDD-style API testing
+- Coverage reports available in text, HTML, and terminal formats
+
+### Development Workflow
+
+1. **Initial Setup**:
+   ```bash
+   make env-init ENV=development
+   make deps
+   make test-setup  # One-time test DB setup
+   ```
+
+2. **Development Cycle**:
+   ```bash
+   make dev         # Hot reload development
+   make test-only   # Fast test execution
+   make fmt         # Format code before commit
+   ```
+
+3. **Before Committing**:
+   ```bash
+   make fmt
+   make test-coverage
+   make swagger     # If API changes were made
+   ```
+
+### Port Configuration
+- **Application**: 8080 (configurable via PORT env var)
+- **PostgreSQL (Dev)**: 15432 (avoids WSL conflicts)
+- **PostgreSQL (Test)**: 15434 (separate test instance)
+- **pgAdmin**: 5050
+
+### Required Tools Installation
+```bash
+# Hot reload
+go install github.com/cosmtrek/air@latest
+
+# Swagger generation
+go install github.com/swaggo/swag/cmd/swag@latest
+
+# Better test output
+go install gotest.tools/gotestsum@latest
+
+# Linter (optional)
+go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+```
 
 ## Important Notes
 
