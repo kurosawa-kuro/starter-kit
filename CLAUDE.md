@@ -11,6 +11,7 @@ This is a multi-language starter project collection containing backend and front
 ```
 src/
 ├── go/
+│   ├── chi/backend/         # Go + Chi REST API
 │   └── gin/backend/         # Go + Gin REST API
 ├── jvm/
 │   ├── java/backend/        # Java + Spring Boot
@@ -26,6 +27,32 @@ src/
 ```
 
 ## Common Development Commands
+
+### Go + Chi Backend (src/go/chi/backend/)
+```bash
+make build       # Build the application
+make run         # Run the application
+make test        # Run tests with test database (uses Docker)
+make test-local  # Run tests with Docker test DB
+make dev         # Run with hot reload (requires air)
+make swagger     # Generate Swagger documentation (requires swag)
+make fmt         # Format code
+make lint        # Run linter (requires golangci-lint)
+make docker      # Run with Docker Compose
+make docker-bg   # Run with Docker Compose in background
+make docker-down # Stop Docker Compose
+
+# Environment management
+make env-init ENV=development  # Initialize environment file
+make env-validate             # Validate environment files
+make env-backup               # Backup environment files
+make env-restore FILE=backup  # Restore from backup
+make env-list                 # List available environments
+
+# Test-specific commands
+make test-db-up   # Start test database only
+make test-db-down # Stop test database
+```
 
 ### Go + Gin Backend (src/go/gin/backend/)
 ```bash
@@ -137,6 +164,65 @@ Backend projects use environment-specific configuration files:
 - `config/env.*` files for different environments
 - Docker Compose files include necessary services (databases, etc.)
 
+## Go + Chi Backend Architecture (src/go/chi/backend/)
+
+The Chi backend follows a clean architecture pattern with clear separation of concerns:
+
+### Directory Structure
+```
+src/
+├── config/           # Configuration management
+│   ├── config.go     # App configuration loader
+│   └── database.go   # Database configuration and connection
+├── handler/          # HTTP handlers (Controller layer)
+│   ├── health.go     # Health check endpoints
+│   └── hello_world.go # Hello World API handlers
+├── middleware/       # HTTP middleware
+│   └── error_handler.go # Global error handling and CORS
+├── models/           # Data models and DTOs
+│   ├── response.go   # Standard API response structures
+│   └── hello_world.go # Hello World domain models
+├── router/           # HTTP routing
+│   └── router.go     # Chi router setup with middleware chain
+├── services/         # Business logic layer
+│   └── hello_world_service.go # Hello World business logic
+├── test/             # Test files
+│   ├── hello_world_test.go    # API integration tests
+│   ├── testify_sample_test.go # Testify usage examples
+│   ├── httpexpect_sample_test.go # HTTPExpect examples
+│   └── apitest_sample_test.go # APITest examples
+├── utils/            # Utility functions
+│   ├── constants.go  # Application constants
+│   └── mock.go       # Mock helpers for testing
+├── db/migrations/    # Database migrations
+└── docs/             # Generated Swagger documentation
+```
+
+### Key Architectural Patterns
+
+1. **Router Setup**: Uses Chi router with comprehensive middleware chain including request logging, recovery, request ID, rate limiting (100 req/s), and 60s timeout
+2. **Error Handling**: Centralized error handling middleware that wraps all responses in standard format
+3. **Database**: Optional PostgreSQL support with graceful fallback when DB is unavailable
+4. **Testing**: Comprehensive test setup with Docker-based test database and multiple testing libraries (testify, httpexpect, apitest)
+5. **Environment Management**: Sophisticated environment configuration system with backup/restore capabilities
+
+### API Response Format
+All API responses follow a consistent structure:
+```json
+{
+  "status": "success|error",
+  "message": "Operation message",
+  "timestamp": "2025-07-26T01:55:51.425125974+09:00",
+  "data": { ... }  // Only for success responses
+}
+```
+
+### Testing Strategy
+- Tests use a separate PostgreSQL instance via Docker Compose
+- Environment variables are automatically configured for test runs
+- Test database is automatically started/stopped during test execution
+- Support for multiple testing approaches (standard Go tests, BDD-style tests, API contract tests)
+
 ## Important Notes
 
 1. Always check for existing Makefiles in each project directory - they contain the most up-to-date commands
@@ -144,3 +230,5 @@ Backend projects use environment-specific configuration files:
 3. Test databases are typically managed via Docker Compose
 4. Swagger/OpenAPI documentation is available for most backend APIs
 5. Frontend projects often include MSW (Mock Service Worker) for API mocking during development
+6. For Go + Chi backend, the test database will automatically start when running `make test`
+7. Environment files are managed through scripts in the `script/` directory for consistency

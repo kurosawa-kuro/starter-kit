@@ -8,7 +8,7 @@ help:
 	@echo ""
 	@echo "  make build    - アプリケーションをビルド"
 	@echo "  make run      - アプリケーションを実行"
-	@echo "  make test     - テストを実行"
+	@echo "  make test     - テストを実行（Docker DB使用）"
 	@echo "  make clean    - ビルドファイルをクリーン"
 	@echo "  make deps     - 依存関係を更新"
 	@echo "  make swagger  - Swaggerドキュメントを生成"
@@ -34,19 +34,34 @@ run:
 	@echo "🚀 Hello World API を起動中..."
 	cd src && go run main.go
 
-# テストを実行（テストDB使用）
-test:
-	@echo "🧪 テストDBを使用したテストを実行中..."
+# テスト用DBのセットアップ（初回のみ実行）
+test-setup:
 	@echo "🔧 テスト用環境変数ファイルを生成中..."
-	@./script/gen-local-test-env.sh
+	@./script/gen-test-env.sh
 	@echo "🔧 テスト用DBを起動中..."
 	@docker compose -f docker/docker-compose.test.yml up -d db-test
 	@echo "⏳ DB起動を待機中..."
 	@sleep 10
+	@echo "✅ テスト用DBのセットアップ完了"
+
+# テストを実行（DBが起動していない場合は自動起動）
+test:
+	@echo "🧪 Docker DBを使用したテストを実行中..."
+	@if ! docker compose -f docker/docker-compose.test.yml ps db-test | grep -q "Up"; then \
+		echo "🔧 テスト用DBが起動していません。セットアップを実行します..."; \
+		$(MAKE) test-setup; \
+	fi
 	@echo "🧪 テストを実行中..."
 	@cd src && GIN_MODE=test go test -v ./test/... -timeout 60s
-	@echo "🐳 テスト用DBを停止中..."
-	@docker compose -f docker/docker-compose.test.yml down
+
+# テストのみ実行（DBの起動・停止なし）
+test-only:
+	@echo "🧪 テストのみ実行中（DBの起動・停止なし）..."
+	@if ! docker compose -f docker/docker-compose.test.yml ps db-test | grep -q "Up"; then \
+		echo "❌ テスト用DBが起動していません。先に make test-setup を実行してください。"; \
+		exit 1; \
+	fi
+	@cd src && GIN_MODE=test go test -v ./test/... -timeout 60s
 
 # ビルドファイルをクリーン
 clean:
@@ -67,7 +82,7 @@ env-init:
 	@echo "🔧 環境変数ファイルを初期化中..."
 	@if [ -z "$(ENV)" ]; then \
 		echo "⚠️  環境タイプを指定してください: make env-init ENV=development"; \
-		echo "利用可能な環境: development, test, local, production"; \
+		echo "利用可能な環境: development, test, production"; \
 		exit 1; \
 	fi
 	@./script/env-manager.sh init $(ENV)
@@ -137,43 +152,15 @@ test-swagger:
 	@echo "🧪 Swaggerテストを実行中..."
 	go test -v ./test/... -run "TestSwagger"
 
-# ローカルテスト用DBを起動
+# テスト用DBを起動
 test-db-up:
 	@echo "🐳 テスト用DBを起動中..."
 	docker compose -f docker/docker-compose.test.yml up -d db-test
 
-# ローカルテスト用DBを停止
+# テスト用DBを停止
 test-db-down:
 	@echo "🐳 テスト用DBを停止中..."
 	docker compose -f docker/docker-compose.test.yml down
-
-# ローカルテストを実行（Docker DB使用）
-test-local:
-	@echo "🧪 ローカルテストを実行中（Docker DB使用）..."
-	@if [ ! -f .env.test ]; then \
-		echo "⚠️  .env.test ファイルが見つかりません。"; \
-		echo "   script/gen-local-test-env.sh を実行してください。"; \
-		exit 1; \
-	fi
-	@echo "🔧 テスト用DBを起動中..."
-	@docker compose -f docker/docker-compose.test.yml up -d db-test
-	@echo "⏳ DB起動を待機中..."
-	@sleep 10
-	@echo "🧪 テストを実行中..."
-	@GIN_MODE=test go test -v ./test/... -timeout 30s
-	@echo "🐳 テスト用DBを停止中..."
-	@docker compose -f docker/docker-compose.test.yml down
-
-# ローカルテストを実行（ローカルDB使用）
-test-local-db:
-	@echo "🧪 ローカルテストを実行中（ローカルDB使用）..."
-	@if [ ! -f .env.local ]; then \
-		echo "⚠️  .env.local ファイルが見つかりません。"; \
-		echo "   script/gen-local-test-env.sh を実行してください。"; \
-		exit 1; \
-	fi
-	@echo "🧪 テストを実行中..."
-	@GIN_MODE=test go test -v ./test/... -timeout 30s
 
 # Docker Composeで起動
 docker:

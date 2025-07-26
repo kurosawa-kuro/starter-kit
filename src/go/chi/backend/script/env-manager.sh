@@ -44,7 +44,6 @@ show_help() {
     echo "Environments:"
     echo "  development    - 開発環境（Docker使用）"
     echo "  test           - テスト環境（Docker DB使用）"
-    echo "  local          - ローカル環境（ローカルDB使用）"
     echo "  production     - 本番環境"
     echo ""
     echo "Examples:"
@@ -110,15 +109,12 @@ init_env_file() {
         "test")
             template_file="config/env.test"
             ;;
-        "local")
-            template_file="config/env.local"
-            ;;
         "production")
             template_file="config/env.production"
             ;;
         *)
-            print_error "不明な環境タイプ: $env_type"
-            echo "利用可能な環境: development, test, local, production"
+                    print_error "不明な環境タイプ: $env_type"
+        echo "利用可能な環境: development, test, production"
             exit 1
             ;;
     esac
@@ -175,7 +171,7 @@ list_environments() {
     echo "利用可能な環境:"
     echo ""
     
-    local env_files=("config/env.development" "config/env.test" "config/env.local" "config/env.production")
+    local env_files=("config/env.development" "config/env.test" "config/env.production")
     
     for file in "${env_files[@]}"; do
         if [ -f "$file" ]; then
