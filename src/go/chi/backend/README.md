@@ -105,18 +105,119 @@ go run main.go
 
 ## 🧪 テスト
 
-### テストの実行
+### テスト支援ライブラリ
+
+本プロジェクトでは、以下のテスト支援ライブラリを導入しています。
+
+- **github.com/stretchr/testify**: 定番のアサーションライブラリ。直感的なassert文でテストが書けます。
+- **github.com/gavv/httpexpect/v2**: HTTP E2Eテストを表現的に記述できます。APIのリクエスト・レスポンス検証に便利です。
+- **github.com/steinfletcher/apitest**: OpenAPI仕様に準拠したAPIテストが可能です。
+
+#### 依存追加方法
+
+```bash
+cd src
+# 依存追加（既に導入済み）
+go get github.com/stretchr/testify github.com/gavv/httpexpect/v2 github.com/steinfletcher/apitest
+```
+
+#### テスト実行方法
 
 ```bash
 # 全テスト実行
+cd src
 go test ./...
 
 # カバレッジ付きテスト
 go test -cover ./...
 
-# 特定のテスト実行
+# 特定のテストのみ実行
 go test ./test -v
 ```
+
+#### サンプルコード
+
+- **testify（アサーション）**
+
+```go
+package test
+
+import (
+    "testing"
+    "github.com/stretchr/testify/assert"
+)
+
+func TestAssertBasic(t *testing.T) {
+    assert := assert.New(t)
+    assert.Equal(123, 123, "数値が一致すること")
+    assert.NotEqual(123, 456, "数値が異なること")
+    assert.True(1 < 2, "1は2より小さい")
+    assert.False(2 < 1, "2は1より小さくない")
+    assert.Nil(nil, "nilであること")
+    assert.NotNil(t, "tはnilではない")
+}
+```
+
+- **httpexpect（HTTP E2Eテスト）**
+
+```go
+package test
+
+import (
+    "net/http"
+    "net/http/httptest"
+    "testing"
+    httpExpect "github.com/gavv/httpexpect/v2"
+)
+
+func TestHelloWorldAPI(t *testing.T) {
+    handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        w.WriteHeader(http.StatusOK)
+        w.Write([]byte(`{"message":"Hello, World!"}`))
+    })
+    srv := httptest.NewServer(handler)
+    defer srv.Close()
+
+    e := httpExpect.New(t, srv.URL)
+    e.GET("/").
+        Expect().
+        Status(http.StatusOK).
+        JSON().Object().
+        ValueEqual("message", "Hello, World!")
+}
+```
+
+- **apitest（OpenAPI準拠テスト）**
+
+```go
+package test
+
+import (
+    "net/http"
+    "testing"
+    "github.com/steinfletcher/apitest"
+)
+
+func TestHelloWorldOpenAPI(t *testing.T) {
+    apitest.New().
+        HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+            w.WriteHeader(http.StatusOK)
+            w.Write([]byte(`{"message":"Hello, World!"}`))
+        }).
+        Get("/").
+        Expect(t).
+        Status(http.StatusOK).
+        Body(`{"message":"Hello, World!"}`).
+        End()
+}
+```
+
+#### 既存APIに合わせたテスト実装例
+
+- `src/test/hello_world_test.go` には、Hello World APIの単体テスト例が実装されています。
+- 各APIエンドポイントに対して、上記サンプルを参考にテストを追加してください。
+
+---
 
 ## 🐳 Docker
 
