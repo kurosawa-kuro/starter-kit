@@ -8,7 +8,15 @@ help:
 	@echo ""
 	@echo "  make build    - アプリケーションをビルド"
 	@echo "  make run      - アプリケーションを実行"
-	@echo "  make test     - テストを実行（Docker DB使用）"
+	@echo "  make test     - テストを実行（DBが起動していない場合は自動起動）"
+	@echo "  make test-only - テストのみ実行（DBの起動・停止なし）"
+	@echo "  make test-coverage - テスト実行（カバレッジ付き）"
+	@echo "  make test-coverage-report - カバレッジレポート生成"
+	@echo "  make test-coverage-html - HTMLカバレッジレポート生成"
+	@echo "  make test-setup - テスト用DBのセットアップ（初回のみ実行）"
+	@echo "  make test-db-status - テスト用DBの状態確認"
+	@echo "  make test-db-up   - テスト用DBを起動"
+	@echo "  make test-db-down - テスト用DBを停止"
 	@echo "  make clean    - ビルドファイルをクリーン"
 	@echo "  make deps     - 依存関係を更新"
 	@echo "  make swagger  - Swaggerドキュメントを生成"
@@ -63,10 +71,45 @@ test-only:
 	fi
 	@cd src && GIN_MODE=test go test -v ./test/... -timeout 60s
 
+# テスト実行（カバレッジ付き）
+test-coverage:
+	@echo "🧪 カバレッジ付きテストを実行中..."
+	@if ! docker compose -f docker/docker-compose.test.yml ps db-test | grep -q "Up"; then \
+		echo "❌ テスト用DBが起動していません。先に make test-setup を実行してください。"; \
+		exit 1; \
+	fi
+	@cd src && GIN_MODE=test go test -v -cover ./services ./models ./handler ./middleware ./router ./config ./utils -timeout 60s
+
+# テスト実行（カバレッジレポート生成）
+test-coverage-report:
+	@echo "🧪 カバレッジレポートを生成中..."
+	@if ! docker compose -f docker/docker-compose.test.yml ps db-test | grep -q "Up"; then \
+		echo "❌ テスト用DBが起動していません。先に make test-setup を実行してください。"; \
+		exit 1; \
+	fi
+	@cd src && GIN_MODE=test go test -v -coverprofile=../coverage.out ./services ./models ./handler ./middleware ./router ./config ./utils -timeout 60s
+	@echo "📊 カバレッジレポートを生成しました: coverage.out"
+	@echo "📈 カバレッジ詳細を表示:"
+	@cd src && go tool cover -func=../coverage.out
+
+# カバレッジレポートをHTMLで表示
+test-coverage-html:
+	@echo "🧪 HTMLカバレッジレポートを生成中..."
+	@if ! docker compose -f docker/docker-compose.test.yml ps db-test | grep -q "Up"; then \
+		echo "❌ テスト用DBが起動していません。先に make test-setup を実行してください。"; \
+		exit 1; \
+	fi
+	@cd src && GIN_MODE=test go test -v -coverprofile=../coverage.out ./services ./models ./handler ./middleware ./router ./config ./utils -timeout 60s
+	@echo "📊 HTMLカバレッジレポートを生成中..."
+	@cd src && go tool cover -html=../coverage.out -o ../coverage.html
+	@echo "✅ HTMLカバレッジレポートを生成しました: coverage.html"
+	@echo "🌐 ブラウザで開く: open coverage.html または coverage.html をダブルクリック"
+
 # ビルドファイルをクリーン
 clean:
 	@echo "🧹 ビルドファイルをクリーン中..."
 	rm -rf bin/
+	rm -f coverage.out coverage.html
 	go clean
 	@echo "✅ クリーン完了"
 
@@ -156,6 +199,11 @@ test-swagger:
 test-db-up:
 	@echo "🐳 テスト用DBを起動中..."
 	docker compose -f docker/docker-compose.test.yml up -d db-test
+
+# テスト用DBの状態確認
+test-db-status:
+	@echo "🔍 テスト用DBの状態を確認中..."
+	@docker compose -f docker/docker-compose.test.yml ps db-test
 
 # テスト用DBを停止
 test-db-down:

@@ -130,19 +130,36 @@ go get github.com/stretchr/testify github.com/gavv/httpexpect/v2 github.com/stei
 #### テスト実行方法
 
 ```bash
-# Docker DBを使用したテスト実行（推奨）
+# 初回セットアップ（テスト用DBを起動）
+make test-setup
+
+# テスト実行（DBが起動していない場合は自動起動）
 make test
 
-# テスト用DBのみ起動
+# テストのみ実行（DBの起動・停止なし、高速）
+make test-only
+
+# テスト用DBの状態確認
+make test-db-status
+
+# テスト用DBを手動で起動
 make test-db-up
 
-# テスト用DBのみ停止
+# テスト用DBを手動で停止
 make test-db-down
 
 # 手動でテスト実行（srcディレクトリで）
 cd src
 go test ./...
-```
+
+# カバレッジ付きテスト実行
+make test-coverage
+
+# カバレッジレポート生成
+make test-coverage-report
+
+# HTMLカバレッジレポート生成
+make test-coverage-html
 
 #### サンプルコード
 
@@ -279,7 +296,9 @@ src/
 ├── test/             # テスト
 │   └── hello_world_test.go # Hello Worldテスト
 ├── db/               # データベース
-│   └── migrations/   # マイグレーションファイル
+│   ├── init.sql      # データベース初期化スクリプト
+│   ├── migrations/   # マイグレーションファイル
+│   └── queries/      # SQLクエリファイル
 ├── docs/             # Swagger文書（自動生成）
 ├── main.go           # アプリケーションエントリーポイント
 ├── go.mod            # Goモジュール定義
@@ -379,7 +398,12 @@ export JWT_SECRET=your-secret-key
 
 ### テスト環境
 
-テスト実行時は専用のPostgreSQLコンテナ（ポート15434）が起動し、テスト終了後に自動停止されます。
+テスト用のPostgreSQLコンテナ（ポート15434）は、初回セットアップ時に起動し、手動で停止するまで継続して動作します。これにより、テスト実行時の起動・停止の待機時間を削減できます。
+
+**推奨ワークフロー:**
+1. `make test-setup` - 初回のみ実行
+2. `make test-only` - 以降のテスト実行（高速）
+3. 開発終了時に `make test-db-down` - テスト用DBを停止
 
 ## 📞 サポート
 
