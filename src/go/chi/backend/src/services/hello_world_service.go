@@ -1,72 +1,80 @@
 package services
 
 import (
-	"backend/config"
-	"backend/models"
-	"backend/utils"
 	"database/sql"
 	"fmt"
+	"time"
+
+	"backend/models"
 )
 
-// HelloWorldService はHello World関連のビジネスロジックを管理します
+// HelloWorldService Hello Worldサービス構造体
 type HelloWorldService struct {
-	db       *config.Database
-	mockData *utils.MockData
+	db *sql.DB
 }
 
-// NewHelloWorldService は新しいHelloWorldServiceを作成します
-func NewHelloWorldService(db *config.Database) *HelloWorldService {
-	return &HelloWorldService{
-		db:       db,
-		mockData: utils.NewMockData(),
+// NewHelloWorldService Hello Worldサービスを新規作成
+func NewHelloWorldService(db *sql.DB) *HelloWorldService {
+	return &HelloWorldService{db: db}
+}
+
+// GetHelloWorld Hello Worldメッセージを取得
+func (s *HelloWorldService) GetHelloWorld() *models.HelloWorldResponse {
+	return &models.HelloWorldResponse{
+		Message:   "Hello, World!",
+		Timestamp: time.Now(),
+		Version:   "1.0.0",
 	}
 }
 
-// CreateHelloWorldMessage は新しいHello Worldメッセージを作成します
-func (s *HelloWorldService) CreateHelloWorldMessage(name string) (*models.HelloWorldMessage, error) {
-	// データベースが利用できない場合はモックレスポンスを返す
-	if s.db == nil || s.db.DB == nil {
-		return s.mockData.GetMockHelloWorldMessage(name), nil
+// CreateHelloWorld Hello Worldメッセージを作成
+func (s *HelloWorldService) CreateHelloWorld(request *models.HelloWorldRequest) (*models.HelloWorldMessage, error) {
+	// バリデーション
+	if err := request.Validate(); err != nil {
+		return nil, err
 	}
 
+	// データベースに保存
 	query := `
-		INSERT INTO hello_world_messages (name, message) 
-		VALUES ($1, $2) 
+		INSERT INTO hello_world_messages (name, message, created_at, updated_at)
+		VALUES ($1, $2, $3, $4)
 		RETURNING id, name, message, created_at, updated_at
 	`
 
-	message := fmt.Sprintf("Hello, %s!", name)
+	message := fmt.Sprintf("Hello, %s!", request.Name)
+	now := time.Now()
 
-	var msg models.HelloWorldMessage
-	err := s.db.DB.QueryRow(query, name, message).Scan(
-		&msg.ID,
-		&msg.Name,
-		&msg.Message,
-		&msg.CreatedAt,
-		&msg.UpdatedAt,
+	var result models.HelloWorldMessage
+	err := s.db.QueryRow(
+		query,
+		request.Name,
+		message,
+		now,
+		now,
+	).Scan(
+		&result.ID,
+		&result.Name,
+		&result.Message,
+		&result.CreatedAt,
+		&result.UpdatedAt,
 	)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to create hello world message: %w", err)
 	}
 
-	return &msg, nil
+	return &result, nil
 }
 
-// GetHelloWorldMessages は全てのHello Worldメッセージを取得します
+// GetHelloWorldMessages 全てのHello Worldメッセージを取得
 func (s *HelloWorldService) GetHelloWorldMessages() ([]models.HelloWorldMessage, error) {
-	// データベースが利用できない場合はモックレスポンスを返す
-	if s.db == nil || s.db.DB == nil {
-		return s.mockData.GetMockHelloWorldMessages(), nil
-	}
-
 	query := `
-		SELECT id, name, message, created_at, updated_at 
-		FROM hello_world_messages 
+		SELECT id, name, message, created_at, updated_at
+		FROM hello_world_messages
 		ORDER BY created_at DESC
 	`
 
-	rows, err := s.db.DB.Query(query)
+	rows, err := s.db.Query(query)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query hello world messages: %w", err)
 	}
@@ -89,31 +97,22 @@ func (s *HelloWorldService) GetHelloWorldMessages() ([]models.HelloWorldMessage,
 	}
 
 	if err = rows.Err(); err != nil {
-		return nil, fmt.Errorf("error iterating over rows: %w", err)
+		return nil, fmt.Errorf("error iterating hello world messages: %w", err)
 	}
 
 	return messages, nil
 }
 
-// GetHelloWorldMessageByID は指定されたIDのHello Worldメッセージを取得します
+// GetHelloWorldMessageByID IDでHello Worldメッセージを取得
 func (s *HelloWorldService) GetHelloWorldMessageByID(id int) (*models.HelloWorldMessage, error) {
-	// データベースが利用できない場合はモックレスポンスを返す
-	if s.db == nil || s.db.DB == nil {
-		message := s.mockData.GetMockHelloWorldMessageByID(id)
-		if message == nil {
-			return nil, fmt.Errorf("hello world message not found with id: %d", id)
-		}
-		return message, nil
-	}
-
 	query := `
-		SELECT id, name, message, created_at, updated_at 
-		FROM hello_world_messages 
+		SELECT id, name, message, created_at, updated_at
+		FROM hello_world_messages
 		WHERE id = $1
 	`
 
 	var msg models.HelloWorldMessage
-	err := s.db.DB.QueryRow(query, id).Scan(
+	err := s.db.QueryRow(query, id).Scan(
 		&msg.ID,
 		&msg.Name,
 		&msg.Message,
@@ -123,7 +122,7 @@ func (s *HelloWorldService) GetHelloWorldMessageByID(id int) (*models.HelloWorld
 
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, fmt.Errorf("hello world message not found with id: %d", id)
+			return nil, fmt.Errorf("hello world message not found")
 		}
 		return nil, fmt.Errorf("failed to get hello world message: %w", err)
 	}

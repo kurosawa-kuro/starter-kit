@@ -1,8 +1,6 @@
 package config
 
 import (
-	"backend/utils"
-	"context"
 	"database/sql"
 	"fmt"
 	"log"
@@ -11,43 +9,62 @@ import (
 	_ "github.com/lib/pq"
 )
 
-// Database はデータベース接続を管理する構造体
-type Database struct {
-	DB *sql.DB
+// DatabaseConfig データベース設定構造体
+type DatabaseConfig struct {
+	Host     string
+	Port     string
+	User     string
+	Password string
+	DBName   string
+	SSLMode  string
 }
 
-// NewDatabase は新しいデータベース接続を作成します
-func NewDatabase(cfg *Config) (*Database, error) {
-	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-		cfg.DBHost, cfg.DBPort, cfg.DBUser, cfg.DBPass, cfg.DBName)
+// NewDatabaseConfig データベース設定を新規作成
+func NewDatabaseConfig(config *Config) *DatabaseConfig {
+	return &DatabaseConfig{
+		Host:     config.DBHost,
+		Port:     config.DBPort,
+		User:     config.DBUser,
+		Password: config.DBPass,
+		DBName:   config.DBName,
+		SSLMode:  "disable", // 開発環境ではSSL無効
+	}
+}
 
-	db, err := sql.Open("postgres", dsn)
+// GetConnectionString データベース接続文字列を取得
+func (dc *DatabaseConfig) GetConnectionString() string {
+	return fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
+		dc.Host, dc.Port, dc.User, dc.Password, dc.DBName, dc.SSLMode)
+}
+
+// Connect データベースに接続
+func (dc *DatabaseConfig) Connect() (*sql.DB, error) {
+	db, err := sql.Open("postgres", dc.GetConnectionString())
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database: %w", err)
 	}
 
-	// 接続テスト（タイムアウト付き）
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(utils.DBPingTimeout)*time.Second)
-	defer cancel()
+	// 接続プール設定
+	db.SetMaxOpenConns(25)
+	db.SetMaxIdleConns(5)
+	db.SetConnMaxLifetime(5 * time.Minute)
 
-	if err := db.PingContext(ctx); err != nil {
+	// 接続テスト
+	if err := db.Ping(); err != nil {
 		return nil, fmt.Errorf("failed to ping database: %w", err)
 	}
 
-	// 接続プール設定
-	db.SetMaxOpenConns(utils.MaxOpenConns)
-	db.SetMaxIdleConns(utils.MaxIdleConns)
-	db.SetConnMaxLifetime(time.Duration(utils.ConnMaxLifetime) * time.Minute)
-
-	log.Println("✅ Database connection established successfully")
-
-	return &Database{DB: db}, nil
+	log.Println("✅ Database connected successfully")
+	return db, nil
 }
 
-// Close はデータベース接続を閉じます
-func (d *Database) Close() error {
-	if d.DB != nil {
-		return d.DB.Close()
+// Close データベース接続を閉じる
+func (dc *DatabaseConfig) Close(db *sql.DB) {
+	if db != nil {
+		if err := db.Close(); err != nil {
+			log.Printf("❌ Error closing database: %v", err)
+		} else {
+			log.Println("✅ Database connection closed")
+		}
 	}
-	return nil
 }
