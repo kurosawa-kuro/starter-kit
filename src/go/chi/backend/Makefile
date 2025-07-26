@@ -89,6 +89,32 @@ test-color-setup:
 	@export GOFLAGS="-test.v"
 	@echo "✅ カラー出力が有効になりました"
 
+# 全体カバレッジ率を計算して表示
+define show_total_coverage
+	@echo "🎯 全体カバレッジ率:"
+	@cd src && TOTAL_COVERAGE=$$(go tool cover -func=../coverage.out | grep "total:" | awk '{print $$3}' | sed 's/%//'); \
+	echo "📊 全体カバレッジ: $$TOTAL_COVERAGE%"; \
+	echo ""; \
+	echo "┌──────────────────────────────────────────────┐"; \
+	echo "│                📈 カバレッジサマリー           │"; \
+	echo "├──────────────────────────────────────────────┤"; \
+	if [ $$(echo "$$TOTAL_COVERAGE >= 90" | bc) -eq 1 ]; then \
+		echo "│  🟢 優秀なカバレッジ率です！ ($$TOTAL_COVERAGE%)           │"; \
+		echo "│     プロダクション品質のテストカバレッジを達成！         │"; \
+	elif [ $$(echo "$$TOTAL_COVERAGE >= 80" | bc) -eq 1 ]; then \
+		echo "│  🟡 良好なカバレッジ率です ($$TOTAL_COVERAGE%)             │"; \
+		echo "│     さらなる改善で優秀レベルを目指しましょう！           │"; \
+	elif [ $$(echo "$$TOTAL_COVERAGE >= 70" | bc) -eq 1 ]; then \
+		echo "│  🟠 改善の余地があります ($$TOTAL_COVERAGE%)               │"; \
+		echo "│     重要な機能のテストを追加してください                 │"; \
+	else \
+		echo "│  🔴 カバレッジ率が低すぎます ($$TOTAL_COVERAGE%)           │"; \
+		echo "│     テストを大幅に追加してください                       │"; \
+	fi; \
+	echo "└──────────────────────────────────────────────┘"; \
+	echo ""
+endef
+
 # テスト実行（カバレッジ付き）
 test-coverage:
 	@echo "🧪 カバレッジ付きテストを実行中..."
@@ -97,7 +123,12 @@ test-coverage:
 		exit 1; \
 	fi
 	@cd src && echo "💡 WSL環境ではgotestsumのカラー出力が制限される場合があります"; \
-	GIN_MODE=test GOFLAGS="-test.v" GOTESTSUM_FORMAT=standard-verbose FORCE_COLOR=1 go test -v -cover ./services ./models ./handler ./middleware ./router ./config ./utils -timeout 60s | sed 's/^PASS$$/✅ PASS/; s/^FAIL$$/❌ FAIL/; s/^RUN$$/🏃 RUN/; s/^--- PASS: /✅ PASS: /; s/^--- FAIL: /❌ FAIL: /; s/^coverage: \([0-9.]*\)% of statements/📊 coverage: \1% of statements/; s/^=== RUN/🏃 === RUN/; s/^DONE \([0-9]*\) tests in \([0-9.]*s\)/🎉 DONE \1 tests in \2s/'
+	GIN_MODE=test GOFLAGS="-test.v" GOTESTSUM_FORMAT=standard-verbose FORCE_COLOR=1 go test -v -coverprofile=../coverage.out ./services ./models ./handler ./middleware ./router ./config ./utils -timeout 60s | sed 's/^PASS$$/✅ PASS/; s/^FAIL$$/❌ FAIL/; s/^RUN$$/🏃 RUN/; s/^--- PASS: /✅ PASS: /; s/^--- FAIL: /❌ FAIL: /; s/^coverage: \([0-9.]*\)% of statements/📊 coverage: \1% of statements/; s/^=== RUN/🏃 === RUN/; s/^DONE \([0-9]*\) tests in \([0-9.]*s\)/🎉 DONE \1 tests in \2s/'
+	@echo ""
+	$(show_total_coverage)
+	@echo ""
+	@echo "📊 パッケージ別カバレッジ:"
+	@cd src && go tool cover -func=../coverage.out | grep -E "(services|models|handler|middleware|router|config|utils)" | sed 's/backend\//📦 /' | sed 's/\.go:/: /' | sed 's/(statements)/ステートメント/'
 
 # テスト実行（カバレッジレポート生成）
 test-coverage-report:
