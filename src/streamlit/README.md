@@ -14,10 +14,11 @@ A simple and interactive Todo application built with Streamlit, featuring catego
 ## Prerequisites
 
 - Python 3.7 or higher
-- pip (Python package installer)
-- Streamlit package
+- pipx (Python application installer)
 
 ## Installation & Setup
+
+This project uses **pipx** instead of virtual environments for dependency management. pipx automatically creates isolated environments for each Python application.
 
 ### Method 1: Using Makefile (Recommended)
 
@@ -25,25 +26,32 @@ A simple and interactive Todo application built with Streamlit, featuring catego
 # Clone or navigate to the project directory
 cd /path/to/streamlit
 
-# Quick start - install dependencies and run the app
+# Quick start - install pipx, Streamlit, and run the app
 make start
 
 # Or step by step:
-# 1. Install dependencies
+# 1. Setup pipx (if not already installed)
+make setup-pipx
+
+# 2. Install Streamlit via pipx
 make install
 
-# 2. Run the application
+# 3. Run the application
 make run
 ```
 
-### Method 2: Manual Setup
+### Method 2: Manual Setup with pipx
 
 ```bash
-# 1. Install dependencies
-pip3 install -r requirements.txt
+# 1. Install pipx (if not already installed)
+python3 -m pip install --user pipx
+python3 -m pipx ensurepath
 
-# 2. Run the application
-cd src && PYTHONPATH=. python3 -m streamlit run app.py
+# 2. Install Streamlit via pipx
+pipx install streamlit
+
+# 3. Run the application
+cd src && PYTHONPATH=. streamlit run app.py
 ```
 
 ## Running the Application
@@ -55,7 +63,7 @@ cd src && PYTHONPATH=. python3 -m streamlit run app.py
 make dev
 
 # Or manually:
-cd src && PYTHONPATH=. python3 -m streamlit run app.py --server.runOnSave true
+cd src && PYTHONPATH=. streamlit run app.py --server.runOnSave true
 ```
 
 ### Production Mode
@@ -65,7 +73,7 @@ cd src && PYTHONPATH=. python3 -m streamlit run app.py --server.runOnSave true
 make run
 
 # Or manually:
-cd src && PYTHONPATH=. python3 -m streamlit run app.py
+cd src && PYTHONPATH=. streamlit run app.py
 ```
 
 The application will be available at: http://localhost:8501
@@ -74,16 +82,18 @@ The application will be available at: http://localhost:8501
 
 ```bash
 make help           # Show all available commands
-make install        # Install dependencies using system Python
+make setup-pipx     # Install pipx if not available
+make install        # Install Streamlit using pipx
 make run            # Run Streamlit application
 make dev            # Run with auto-reload enabled
 make build          # Basic build check (test imports)
 make test           # Run basic tests
 make clean          # Clean cache and temporary files
-make requirements   # Update requirements.txt
-make setup-dev      # Setup development environment with tools
-make format         # Format code with black (requires setup-dev)
-make lint           # Lint code with flake8 (requires setup-dev)
+make requirements   # Show current pipx packages (pipx list)
+make setup-dev      # Setup development environment with tools via pipx
+make format         # Format code with black (auto-installs via pipx)
+make lint           # Lint code with flake8 (auto-installs via pipx)
+make uninstall      # Uninstall Streamlit and dev tools from pipx
 ```
 
 ## Usage
@@ -125,13 +135,13 @@ The application follows a clean separation of concerns:
 ### Setting up Development Environment
 
 ```bash
-# Install development tools
+# Install development tools via pipx
 make setup-dev
 
-# Format code
+# Format code (auto-installs black via pipx if needed)
 make format
 
-# Lint code  
+# Lint code (auto-installs flake8 via pipx if needed)  
 make lint
 ```
 
@@ -148,9 +158,10 @@ make lint
 ### Common Issues
 
 1. **Port already in use**: If port 8501 is busy, Streamlit will automatically try the next available port
-2. **Import errors**: Ensure all dependencies are installed with `make install`
+2. **Import errors**: Ensure Streamlit is installed with `make install` (via pipx)
 3. **Module not found**: Make sure you're running from the correct directory with proper PYTHONPATH
-4. **Permission errors**: You may need to use `sudo` for system-wide package installation
+4. **pipx not found**: Install pipx with `make setup-pipx` or manually install it
+5. **Command not found**: Ensure pipx PATH is properly configured (`pipx ensurepath`)
 
 ### Logs and Debugging
 
@@ -184,6 +195,8 @@ make docker-run
 
 ## Notes
 
-- This project uses system Python directly (no virtual environment)
-- Dependencies are installed globally or user-wide
-- Make sure you have the required Python version and packages installed
+- This project uses **pipx** for Python application management (no virtual environment setup needed)
+- pipx automatically creates isolated environments for each application
+- Dependencies are managed by pipx in separate, isolated environments
+- Make sure you have Python 3.7+ and pipx installed
+- Run `pipx list` to see all installed applications and their versions

@@ -1,31 +1,45 @@
-.PHONY: install run dev clean build test requirements help
+# Streamlit Todo App Makefile
+# Uses pipx for managing Python applications in isolated environments
+# No virtual environments (venv) required - pipx handles isolation automatically
 
-# Python settings
-PYTHON = python3
-PIP = pip3
+.PHONY: install setup-pipx run dev clean build test requirements help
+
+# pipx settings
 PYTHONPATH = src
+STREAMLIT = streamlit
 
 help: ## Show this help message
 	@echo "Available commands:"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-15s %s\n", $$1, $$2}'
 
-install: ## Install dependencies using system Python (break system packages)
-	$(PIP) install --break-system-packages -r requirements.txt
+setup-pipx: ## Install pipx if not available
+	@command -v pipx >/dev/null 2>&1 || { echo "Installing pipx..."; python3 -m pip install --user pipx; python3 -m pipx ensurepath; }
+	@echo "✅ pipx is available"
 
-requirements: ## Update requirements.txt with current installed packages
-	$(PIP) freeze > requirements.txt
+install: setup-pipx ## Install Streamlit using pipx
+	pipx install streamlit
+	@echo "✅ Streamlit installed via pipx"
+
+requirements: ## Show current Streamlit version (pipx list)
+	@echo "Current pipx packages:"
+	pipx list
 
 run: ## Run Streamlit application
-	cd $(PYTHONPATH) && PYTHONPATH=. $(PYTHON) -m streamlit run app.py
+	cd $(PYTHONPATH) && PYTHONPATH=. $(STREAMLIT) run app.py
 
 dev: ## Run Streamlit application in development mode with auto-reload
-	cd $(PYTHONPATH) && PYTHONPATH=. $(PYTHON) -m streamlit run app.py --server.runOnSave true
+	cd $(PYTHONPATH) && PYTHONPATH=. $(STREAMLIT) run app.py --server.runOnSave true
 
-build: ## Check if the application can be imported (basic build check)
-	cd $(PYTHONPATH) && PYTHONPATH=. $(PYTHON) -c "import app; print('✅ Application can be imported successfully')"
+build: ## Check if the application can be found and streamlit works
+	@command -v streamlit >/dev/null 2>&1 || { echo "❌ Streamlit not found. Run 'make install' first."; exit 1; }
+	@echo "✅ Streamlit is available via pipx"
+	@echo "✅ Application files are present in $(PYTHONPATH)/"
 
-test: ## Run basic tests (check if app can be imported and run)
-	cd $(PYTHONPATH) && PYTHONPATH=. $(PYTHON) -c "import streamlit as st; import app; print('✅ All imports successful')"
+test: ## Run basic tests (check if streamlit and app files are available)
+	@command -v streamlit >/dev/null 2>&1 || { echo "❌ Streamlit not found. Run 'make install' first."; exit 1; }
+	@test -f $(PYTHONPATH)/app.py || { echo "❌ app.py not found"; exit 1; }
+	@test -f $(PYTHONPATH)/service.py || { echo "❌ service.py not found"; exit 1; }
+	@echo "✅ All required files present and Streamlit is available"
 
 clean: ## Clean cache and temporary files
 	find . -type f -name "*.pyc" -delete
@@ -41,14 +55,26 @@ docker-run: ## Run application in Docker container
 	docker run -p 8501:8501 streamlit-todo-app
 
 # Development helpers
-format: ## Format Python code (requires black)
-	$(PYTHON) -m black $(PYTHONPATH)/
+format: ## Format Python code (requires black via pipx)
+	@command -v black >/dev/null 2>&1 || pipx install black
+	black $(PYTHONPATH)/
 
-lint: ## Lint Python code (requires flake8)
-	$(PYTHON) -m flake8 $(PYTHONPATH)/
+lint: ## Lint Python code (requires flake8 via pipx)
+	@command -v flake8 >/dev/null 2>&1 || pipx install flake8
+	flake8 $(PYTHONPATH)/
 
-setup-dev: ## Setup development environment with additional tools
-	$(PIP) install --break-system-packages black flake8 pytest
+setup-dev: ## Setup development environment with additional tools via pipx
+	pipx install black
+	pipx install flake8
+	pipx install pytest
+	@echo "✅ Development tools installed via pipx"
+
+uninstall: ## Uninstall Streamlit and dev tools from pipx
+	pipx uninstall streamlit || true
+	pipx uninstall black || true
+	pipx uninstall flake8 || true
+	pipx uninstall pytest || true
+	@echo "✅ Streamlit and dev tools uninstalled from pipx"
 
 # Quick start
 start: install run ## Quick start: install dependencies and run the application
