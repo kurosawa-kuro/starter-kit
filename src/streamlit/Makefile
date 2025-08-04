@@ -1,7 +1,7 @@
 # Streamlit Todo App Makefile - Cross Platform
-# Automatically detects OS and uses appropriate commands
+# Automatically detects OS and uses appropriate commands with pipx
 
-.PHONY: install run dev clean test help detect-os
+.PHONY: install run dev clean test help detect-os setup-pipx
 
 # OS Detection
 ifeq ($(OS),Windows_NT)
@@ -34,32 +34,40 @@ help: ## Show this help message
 	@echo "Detected OS: $(OS_TYPE)"
 	@echo ""
 	@echo "Available commands:"
-	@echo "  install       - Install Streamlit and dependencies"
-	@echo "  run           - Run Streamlit application"
-	@echo "  dev           - Run in development mode with auto-reload"
-	@echo "  test          - Run tests"
-	@echo "  clean         - Clean cache files"
-	@echo "  start         - Quick start (install + run)"
-	@echo "  detect-os     - Show OS detection info"
+	@echo "  setup-pipx   - Setup pipx environment"
+	@echo "  install      - Install Streamlit and dependencies via pipx"
+	@echo "  run          - Run Streamlit application"
+	@echo "  dev          - Run in development mode with auto-reload"
+	@echo "  test         - Run tests"
+	@echo "  clean        - Clean cache files"
+	@echo "  start        - Quick start (setup + install + run)"
+	@echo "  detect-os    - Show OS detection info"
 	@echo "  render-deploy - Show Render deployment guide"
-	@echo "  render-test   - Test Render deployment locally"
+	@echo "  render-test  - Test Render deployment locally"
 	@echo ""
 	@echo "OS-specific files:"
 	@echo "  Makefile.windows - Windows-specific version"
 	@echo "  Makefile.ubuntu  - Ubuntu/Linux-specific version"
 
-install: ## Install Streamlit and dependencies
-	@echo "Installing Streamlit for $(OS_TYPE)..."
-	$(PYTHON_CMD) -m pip install -r requirements.txt
-	@echo "✅ Streamlit installed"
+setup-pipx: ## Setup pipx environment
+	@echo "Setting up pipx environment for $(OS_TYPE)..."
+	$(PYTHON_CMD) -m pip install --user pipx
+	$(PYTHON_CMD) -m pipx ensurepath
+	@echo "✅ pipx setup completed"
+
+install: setup-pipx ## Install Streamlit and dependencies via pipx
+	@echo "Installing Streamlit via pipx for $(OS_TYPE)..."
+	pipx install streamlit
+	pipx install python-dotenv
+	@echo "✅ Streamlit installed via pipx"
 
 run: ## Run Streamlit application
 	@echo "Starting Streamlit application..."
-	cd $(PYTHONPATH) && $(PYTHON_CMD) -m streamlit run app.py
+	cd $(PYTHONPATH) && streamlit run app.py
 
 dev: ## Run Streamlit application in development mode
 	@echo "Starting Streamlit in development mode..."
-	cd $(PYTHONPATH) && $(PYTHON_CMD) -m streamlit run app.py --server.runOnSave true
+	cd $(PYTHONPATH) && streamlit run app.py --server.runOnSave true
 
 test: ## Run tests
 	@echo "Running tests..."
@@ -70,7 +78,7 @@ clean: ## Clean cache and temporary files
 	$(CLEAN_CMD)
 	@echo "✅ Clean completed"
 
-start: install run ## Quick start: install dependencies and run the application
+start: install run ## Quick start: setup pipx, install dependencies and run the application
 
 # OS-specific shortcuts
 windows: ## Use Windows-specific Makefile
