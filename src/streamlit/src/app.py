@@ -1,6 +1,11 @@
 import streamlit as st
 from typing import Dict, List, Any
+import os
+from dotenv import load_dotenv
 from service import TodoService
+
+# 環境変数の読み込み
+load_dotenv('env.local')
 
 def initialize_session_state() -> None:
     """初期化処理：セッション状態の設定"""
@@ -10,6 +15,25 @@ def initialize_session_state() -> None:
         st.session_state.filter_state = "all"
     if 'filter_category' not in st.session_state:
         st.session_state.filter_category = None
+
+def display_database_info() -> None:
+    """データベース情報の表示"""
+    todo_service = st.session_state.todo_service
+    db_info = todo_service.get_database_info()
+    
+    st.sidebar.markdown("---")
+    st.sidebar.subheader("🗄️ データベース情報")
+    
+    # データベースタイプの表示
+    db_type = db_info['database_type']
+    if db_type == 'MEMORY':
+        st.sidebar.info("💾 メモリ内データベース")
+    elif db_type == 'NEON':
+        st.sidebar.success("☁️ Neon PostgreSQL")
+        st.sidebar.caption(f"ホスト: {db_info.get('neon_host', 'N/A')}")
+        st.sidebar.caption(f"データベース: {db_info.get('neon_database', 'N/A')}")
+    
+    st.sidebar.caption(f"リポジトリ: {db_info['repository_class']}")
 
 def display_todos(todos: List[Dict[str, Any]]) -> None:
     """Todoリストの表示"""
@@ -32,6 +56,10 @@ def display_todos(todos: List[Dict[str, Any]]) -> None:
                 if categories:
                     category_tags = " ".join([f"🏷️{cat['title']}" for cat in categories])
                     st.caption(category_tags)
+                
+                # 作成日時の表示（存在する場合）
+                if 'created_at' in todo:
+                    st.caption(f"作成: {todo['created_at'][:19]}")
             with col2:
                 st.caption(f"ID: {todo['id']}")
 
@@ -53,11 +81,14 @@ def main() -> None:
     st.set_page_config(
         page_title="Simple Todo App",
         page_icon="📝",
-        layout="centered"
+        layout="wide"
     )
     
     initialize_session_state()
     todo_service = st.session_state.todo_service
+    
+    # サイドバーにデータベース情報を表示
+    display_database_info()
     
     st.title("📝 Simple Todo App")
     st.markdown("---")
@@ -187,7 +218,8 @@ def main() -> None:
         debug_info = todo_service.get_debug_info()
         debug_info.update({
             "current_filter": st.session_state.filter_state,
-            "filter_category": st.session_state.filter_category
+            "filter_category": st.session_state.filter_category,
+            "database_info": todo_service.get_database_info()
         })
         st.json(debug_info)
 

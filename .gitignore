@@ -3,3 +3,4 @@ go/gin/backend/.env.*
 */bin/*
 src/streamlit/src/__pycache__/*
 src/streamlit/tests/__pycache__/*
+src/streamlit/env.local

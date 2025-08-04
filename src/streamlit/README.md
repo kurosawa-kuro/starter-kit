@@ -10,6 +10,37 @@ Streamlitで構築されたシンプルでインタラクティブなTodoアプ�
 - 📊 リアルタイム統計表示
 - 🎯 セッションベースの状態管理
 - 🔧 デバッグ情報パネル
+- 🗄️ データベース選択機能（メモリ内 / Neon PostgreSQL）
+
+## アーキテクチャ
+
+このアプリケーションは**リポジトリパターン**を採用しており、データアクセス層とビジネスロジック層が分離されています：
+
+- **Service Layer**: ビジネスロジックを管理
+- **Repository Layer**: データアクセスを抽象化
+- **Memory Repository**: 開発・テスト用のメモリ内データ
+- **Neon Repository**: 本番用のPostgreSQLデータベース
+
+## データベース設定
+
+環境変数ファイル `env.local` でデータベースタイプを選択できます：
+
+### メモリ内データベース（デフォルト）
+```bash
+DATABASE_TYPE=MEMORY
+```
+
+### Neon PostgreSQL
+```bash
+DATABASE_TYPE=NEON
+NEON_DATABASE_URL=postgresql://username:password@host:port/database
+# または個別設定：
+NEON_DATABASE_HOST=your-neon-host.neon.tech
+NEON_DATABASE_PORT=5432
+NEON_DATABASE_NAME=your-database-name
+NEON_DATABASE_USER=your-username
+NEON_DATABASE_PASSWORD=your-password
+```
 
 ## 前提条件
 

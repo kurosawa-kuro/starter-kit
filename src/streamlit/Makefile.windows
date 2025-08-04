@@ -1,7 +1,7 @@
 # Streamlit Todo App Makefile for Windows
-# Simple approach without pipx for better Windows compatibility
+# Uses pipx for isolated Python application management
 
-.PHONY: install run dev clean test help
+.PHONY: install run dev clean test help setup-pipx
 
 # Settings
 PYTHONPATH = src
@@ -9,25 +9,33 @@ STREAMLIT = streamlit
 
 help: ## Show this help message
 	@echo "Available commands:"
-	@echo "  install  - Install Streamlit and dependencies"
-	@echo "  run      - Run Streamlit application"
-	@echo "  dev      - Run in development mode with auto-reload"
-	@echo "  test     - Run tests"
-	@echo "  clean    - Clean cache files"
-	@echo "  start    - Quick start (install + run)"
+	@echo "  setup-pipx - Setup pipx environment"
+	@echo "  install    - Install Streamlit and dependencies via pipx"
+	@echo "  run        - Run Streamlit application"
+	@echo "  dev        - Run in development mode with auto-reload"
+	@echo "  test       - Run tests"
+	@echo "  clean      - Clean cache files"
+	@echo "  start      - Quick start (setup + install + run)"
 
-install: ## Install Streamlit and dependencies
-	@echo "Installing Streamlit..."
-	python -m pip install -r requirements.txt
-	@echo "✅ Streamlit installed"
+setup-pipx: ## Setup pipx environment
+	@echo "Setting up pipx environment..."
+	python -m pip install --user pipx
+	python -m pipx ensurepath
+	@echo "✅ pipx setup completed"
+
+install: setup-pipx ## Install Streamlit and dependencies via pipx
+	@echo "Installing Streamlit via pipx..."
+	pipx install streamlit
+	pipx install python-dotenv
+	@echo "✅ Streamlit installed via pipx"
 
 run: ## Run Streamlit application
 	@echo "Starting Streamlit application..."
-	cd $(PYTHONPATH) && python -m streamlit run app.py
+	cd $(PYTHONPATH) && streamlit run app.py
 
 dev: ## Run Streamlit application in development mode
 	@echo "Starting Streamlit in development mode..."
-	cd $(PYTHONPATH) && python -m streamlit run app.py --server.runOnSave true
+	cd $(PYTHONPATH) && streamlit run app.py --server.runOnSave true
 
 test: ## Run tests
 	@echo "Running tests..."
@@ -41,4 +49,4 @@ clean: ## Clean cache and temporary files
 	rmdir /s /q .streamlit 2>nul || true
 	@echo "✅ Clean completed"
 
-start: install run ## Quick start: install dependencies and run the application 
+start: install run ## Quick start: setup pipx, install dependencies and run the application 
