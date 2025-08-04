@@ -1,84 +1,80 @@
-# Streamlit Todo App Makefile
-# Uses pipx for managing Python applications in isolated environments
-# No virtual environments (venv) required - pipx handles isolation automatically
+# Streamlit Todo App Makefile - Cross Platform
+# Automatically detects OS and uses appropriate commands
 
-.PHONY: install setup-pipx run dev clean build test requirements help
+.PHONY: install run dev clean test help detect-os
 
-# pipx settings
+# OS Detection
+ifeq ($(OS),Windows_NT)
+    # Windows
+    OS_TYPE := windows
+    PYTHON_CMD := python
+    CLEAN_CMD := del /s /q *.pyc 2>nul || true && rmdir /s /q __pycache__ 2>nul || true && rmdir /s /q *.egg-info 2>nul || true && rmdir /s /q .streamlit 2>nul || true
+    FILE_CHECK := if not exist
+    COMMAND_CHECK := where
+else
+    # Unix-like (Linux, macOS)
+    OS_TYPE := unix
+    PYTHON_CMD := python3
+    CLEAN_CMD := find . -type f -name "*.pyc" -delete && find . -type d -name "__pycache__" -delete && find . -type d -name "*.egg-info" -exec rm -rf {} + && rm -rf .streamlit
+    FILE_CHECK := test -f
+    COMMAND_CHECK := command -v
+endif
+
+# Settings
 PYTHONPATH = src
 STREAMLIT = streamlit
 
+detect-os: ## Detect current operating system
+	@echo "Detected OS: $(OS_TYPE)"
+	@echo "Python command: $(PYTHON_CMD)"
+	@echo "Clean command: $(CLEAN_CMD)"
+
 help: ## Show this help message
+	@echo "Streamlit Todo App - Cross Platform Makefile"
+	@echo "Detected OS: $(OS_TYPE)"
+	@echo ""
 	@echo "Available commands:"
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-15s %s\n", $$1, $$2}'
+	@echo "  install   - Install Streamlit and dependencies"
+	@echo "  run       - Run Streamlit application"
+	@echo "  dev       - Run in development mode with auto-reload"
+	@echo "  test      - Run tests"
+	@echo "  clean     - Clean cache files"
+	@echo "  start     - Quick start (install + run)"
+	@echo "  detect-os - Show OS detection info"
+	@echo ""
+	@echo "OS-specific files:"
+	@echo "  Makefile.windows - Windows-specific version"
+	@echo "  Makefile.ubuntu  - Ubuntu/Linux-specific version"
 
-setup-pipx: ## Install pipx if not available
-	@command -v pipx >/dev/null 2>&1 || { echo "Installing pipx..."; python3 -m pip install --user pipx; python3 -m pipx ensurepath; }
-	@echo "✅ pipx is available"
-
-install: setup-pipx ## Install Streamlit using pipx
-	pipx install streamlit
-	@echo "✅ Streamlit installed via pipx"
-
-requirements: ## Show current Streamlit version (pipx list)
-	@echo "Current pipx packages:"
-	pipx list
+install: ## Install Streamlit and dependencies
+	@echo "Installing Streamlit for $(OS_TYPE)..."
+	$(PYTHON_CMD) -m pip install -r requirements.txt
+	@echo "✅ Streamlit installed"
 
 run: ## Run Streamlit application
-	cd $(PYTHONPATH) && PYTHONPATH=. $(STREAMLIT) run app.py
+	@echo "Starting Streamlit application..."
+	cd $(PYTHONPATH) && $(PYTHON_CMD) -m streamlit run app.py
 
-dev: ## Run Streamlit application in development mode with auto-reload
-	cd $(PYTHONPATH) && PYTHONPATH=. $(STREAMLIT) run app.py --server.runOnSave true
+dev: ## Run Streamlit application in development mode
+	@echo "Starting Streamlit in development mode..."
+	cd $(PYTHONPATH) && $(PYTHON_CMD) -m streamlit run app.py --server.runOnSave true
 
-build: ## Check if the application can be found and streamlit works
-	@command -v streamlit >/dev/null 2>&1 || { echo "❌ Streamlit not found. Run 'make install' first."; exit 1; }
-	@echo "✅ Streamlit is available via pipx"
-	@echo "✅ Application files are present in $(PYTHONPATH)/"
-
-test: ## Run pytest tests
-	@command -v pytest >/dev/null 2>&1 || { echo "Installing pytest..."; pipx install pytest; }
-	PYTHONPATH=src pytest tests/ -v
-
-test-basic: ## Run basic tests (check if streamlit and app files are available)
-	@command -v streamlit >/dev/null 2>&1 || { echo "❌ Streamlit not found. Run 'make install' first."; exit 1; }
-	@test -f $(PYTHONPATH)/app.py || { echo "❌ app.py not found"; exit 1; }
-	@test -f $(PYTHONPATH)/service.py || { echo "❌ service.py not found"; exit 1; }
-	@echo "✅ All required files present and Streamlit is available"
+test: ## Run tests
+	@echo "Running tests..."
+	cd $(PYTHONPATH) && $(PYTHON_CMD) -m pytest ../tests/ -v
 
 clean: ## Clean cache and temporary files
-	find . -type f -name "*.pyc" -delete
-	find . -type d -name "__pycache__" -delete
-	find . -type d -name "*.egg-info" -exec rm -rf {} +
-	rm -rf .streamlit
+	@echo "Cleaning cache files for $(OS_TYPE)..."
+	$(CLEAN_CMD)
+	@echo "✅ Clean completed"
 
-# Docker commands (optional)
-docker-build: ## Build Docker image
-	docker build -t streamlit-todo-app .
-
-docker-run: ## Run application in Docker container
-	docker run -p 8501:8501 streamlit-todo-app
-
-# Development helpers
-format: ## Format Python code (requires black via pipx)
-	@command -v black >/dev/null 2>&1 || pipx install black
-	black $(PYTHONPATH)/
-
-lint: ## Lint Python code (requires flake8 via pipx)
-	@command -v flake8 >/dev/null 2>&1 || pipx install flake8
-	flake8 $(PYTHONPATH)/
-
-setup-dev: ## Setup development environment with additional tools via pipx
-	pipx install black
-	pipx install flake8
-	pipx install pytest
-	@echo "✅ Development tools installed via pipx"
-
-uninstall: ## Uninstall Streamlit and dev tools from pipx
-	pipx uninstall streamlit || true
-	pipx uninstall black || true
-	pipx uninstall flake8 || true
-	pipx uninstall pytest || true
-	@echo "✅ Streamlit and dev tools uninstalled from pipx"
-
-# Quick start
 start: install run ## Quick start: install dependencies and run the application
+
+# OS-specific shortcuts
+windows: ## Use Windows-specific Makefile
+	@echo "Using Windows-specific Makefile..."
+	@make -f Makefile.windows $(MAKECMDGOALS)
+
+ubuntu: ## Use Ubuntu-specific Makefile
+	@echo "Using Ubuntu-specific Makefile..."
+	@make -f Makefile.ubuntu $(MAKECMDGOALS)
