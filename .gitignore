@@ -1,4 +1,5 @@
 go/gin/backend/.env.*
 */bin/*
 */bin/*
-src/streamlit/src/__pycache__/
+src/streamlit/src/__pycache__/*
+src/streamlit/tests/__pycache__/*

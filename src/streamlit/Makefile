@@ -35,7 +35,11 @@ build: ## Check if the application can be found and streamlit works
 	@echo "✅ Streamlit is available via pipx"
 	@echo "✅ Application files are present in $(PYTHONPATH)/"
 
-test: ## Run basic tests (check if streamlit and app files are available)
+test: ## Run pytest tests
+	@command -v pytest >/dev/null 2>&1 || { echo "Installing pytest..."; pipx install pytest; }
+	PYTHONPATH=src pytest tests/ -v
+
+test-basic: ## Run basic tests (check if streamlit and app files are available)
 	@command -v streamlit >/dev/null 2>&1 || { echo "❌ Streamlit not found. Run 'make install' first."; exit 1; }
 	@test -f $(PYTHONPATH)/app.py || { echo "❌ app.py not found"; exit 1; }
 	@test -f $(PYTHONPATH)/service.py || { echo "❌ service.py not found"; exit 1; }
