@@ -1,5 +1,5 @@
 import streamlit as st
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any
 from service import TodoService
 
 def initialize_session_state() -> None:
