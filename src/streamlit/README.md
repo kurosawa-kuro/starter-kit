@@ -212,6 +212,40 @@ make lint
 - Streamlitサーバーログのターミナル出力を確認
 - `make test`を使用して基本機能を検証
 
+## Renderデプロイ
+
+このプロジェクトはRenderに簡単にデプロイできます。
+
+### デプロイ手順
+
+1. **GitHubにプッシュ**
+   ```bash
+   git add .
+   git commit -m "Add Render deployment support"
+   git push origin main
+   ```
+
+2. **Renderでデプロイ**
+   - [Render Dashboard](https://dashboard.render.com/)にアクセス
+   - "New +" → "Web Service"を選択
+   - GitHubリポジトリを接続
+   - 以下の設定を使用：
+     - **Name**: `streamlit-todo-app`
+     - **Environment**: `Python`
+     - **Build Command**: `pip install -r requirements.txt`
+     - **Start Command**: `cd src && streamlit run app.py --server.port $PORT --server.address 0.0.0.0`
+
+3. **環境変数設定**
+   - `PYTHON_VERSION`: `3.11.0`
+
+### 自動デプロイ
+
+`render.yaml`ファイルが含まれているため、Renderは自動的に設定を読み取ります。
+
+### カスタムドメイン
+
+デプロイ後、Renderダッシュボードでカスタムドメインを設定できます。
+
 ## Dockerサポート（オプション）
 
 ```bash

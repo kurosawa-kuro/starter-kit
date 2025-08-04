@@ -34,13 +34,15 @@ help: ## Show this help message
 	@echo "Detected OS: $(OS_TYPE)"
 	@echo ""
 	@echo "Available commands:"
-	@echo "  install   - Install Streamlit and dependencies"
-	@echo "  run       - Run Streamlit application"
-	@echo "  dev       - Run in development mode with auto-reload"
-	@echo "  test      - Run tests"
-	@echo "  clean     - Clean cache files"
-	@echo "  start     - Quick start (install + run)"
-	@echo "  detect-os - Show OS detection info"
+	@echo "  install       - Install Streamlit and dependencies"
+	@echo "  run           - Run Streamlit application"
+	@echo "  dev           - Run in development mode with auto-reload"
+	@echo "  test          - Run tests"
+	@echo "  clean         - Clean cache files"
+	@echo "  start         - Quick start (install + run)"
+	@echo "  detect-os     - Show OS detection info"
+	@echo "  render-deploy - Show Render deployment guide"
+	@echo "  render-test   - Test Render deployment locally"
 	@echo ""
 	@echo "OS-specific files:"
 	@echo "  Makefile.windows - Windows-specific version"
@@ -78,3 +80,20 @@ windows: ## Use Windows-specific Makefile
 ubuntu: ## Use Ubuntu-specific Makefile
 	@echo "Using Ubuntu-specific Makefile..."
 	@make -f Makefile.ubuntu $(MAKECMDGOALS)
+
+# Render deployment
+render-deploy: ## Deploy to Render (requires git push first)
+	@echo "🚀 Deploying to Render..."
+	@echo "1. Make sure your code is pushed to GitHub"
+	@echo "2. Go to https://dashboard.render.com/"
+	@echo "3. Create new Web Service"
+	@echo "4. Connect your GitHub repository"
+	@echo "5. Use the following settings:"
+	@echo "   - Environment: Python"
+	@echo "   - Build Command: pip install -r requirements.txt"
+	@echo "   - Start Command: cd src && streamlit run app.py --server.port \$PORT --server.address 0.0.0.0"
+	@echo "✅ Render deployment guide displayed"
+
+render-test: ## Test Render deployment locally
+	@echo "🧪 Testing Render deployment locally..."
+	cd src && PORT=8501 streamlit run app.py --server.port 8501 --server.address 0.0.0.0
