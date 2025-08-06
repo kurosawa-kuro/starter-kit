@@ -55,3 +55,22 @@ doppler run node connection-test-doppler.js
 - 接続URLには機密情報が含まれているため、本番環境ではDopplerを使用してください
 - このサンプルは接続確認のみを目的としており、実際のアプリケーションでは適切なエラーハンドリングとセキュリティ対策を実装してください
 - Dopplerを使用することで、シークレットの安全な管理と環境別の設定管理が可能になります 
+
+
+neondb スキーマ、テーブル作成 例
+
+# 1) 接続
+psql 'postgresql://neondb_owner:…'
+
+# 2) スキーマ作成
+neondb=> CREATE SCHEMA billing;
+
+# 3) テーブル作成
+neondb=> CREATE TABLE billing.invoices (
+            id SERIAL PRIMARY KEY,
+            amount NUMERIC NOT NULL
+         );
+
+# 4) 確認
+neondb=> \dn      -- スキーマ一覧
+neondb=> \dt billing.*  -- billing スキーマのテーブル一覧
