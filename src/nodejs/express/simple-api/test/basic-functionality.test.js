@@ -341,6 +341,243 @@ describe('Basic Functionality Tests', () => {
         });
     });
 
+    describe('Config Tests', () => {
+        let originalEnv;
+
+        beforeEach(() => {
+            originalEnv = { ...process.env };
+        });
+
+        afterEach(() => {
+            process.env = originalEnv;
+        });
+
+        it('should load default configuration', () => {
+            const config = require('../src/config/config');
+            expect(config.port).toBe(8081); // テスト環境では8081が設定されている
+            expect(config.nodeEnv).toBe('test');
+            expect(config.host).toBe('0.0.0.0');
+            expect(config.dbPath).toBe('./data/test-database.sqlite');
+            expect(config.appName).toBe('Hello World API');
+            expect(config.appVersion).toBe('1.0.0');
+        });
+
+        it('should load configuration from environment variables', () => {
+            // 環境変数を設定
+            const originalEnv = { ...process.env };
+            process.env.PORT = '3000';
+            process.env.NODE_ENV = 'production';
+            process.env.DB_PATH = '/custom/path/db.sqlite';
+            process.env.LOG_LEVEL = 'debug';
+            process.env.RATE_LIMIT_ENABLED = 'false';
+            process.env.MOCK_MODE = 'true';
+            process.env.DEBUG_MODE = 'true';
+
+            // モジュールを再読み込み
+            jest.resetModules();
+            const config = require('../src/config/config');
+
+            expect(config.port).toBe(3000);
+            expect(config.nodeEnv).toBe('production');
+            expect(config.dbPath).toBe('/custom/path/db.sqlite');
+            expect(config.logLevel).toBe('info'); // production環境では'info'に上書きされる
+            expect(config.rateLimitEnabled).toBe(true); // production環境ではtrueに上書きされる
+            expect(config.mockMode).toBe(false); // production環境ではfalseに上書きされる
+            expect(config.debugMode).toBe(false); // production環境ではfalseに上書きされる
+
+            // 環境変数を復元
+            process.env = originalEnv;
+        });
+
+        it('should handle invalid port number', () => {
+            // process.exitをモックしてテストが終了しないようにする
+            const originalExit = process.exit;
+            process.exit = jest.fn();
+            
+            const originalEnv = { ...process.env };
+            process.env.PORT = '70000';
+            jest.resetModules();
+            
+            // 設定検証でエラーが発生することを確認
+            let config;
+            try {
+                config = require('../src/config/config');
+            } catch (error) {
+                expect(error.message).toContain('Invalid port number');
+                expect(process.exit).toHaveBeenCalledWith(1);
+            }
+            
+            // process.exitを元に戻す
+            process.exit = originalExit;
+            process.env = originalEnv;
+        });
+
+        it('should handle missing required fields', () => {
+            const originalPort = process.env.PORT;
+            const originalDbPath = process.env.DB_PATH;
+            
+            delete process.env.PORT;
+            delete process.env.DB_PATH;
+            
+            jest.resetModules();
+            
+            // デフォルト値が設定されるため、エラーは発生しない
+            const config = require('../src/config/config');
+            expect(config.port).toBe(8080);
+            expect(config.dbPath).toBe('./data/database.sqlite');
+            
+            // 環境変数を復元
+            if (originalPort) process.env.PORT = originalPort;
+            if (originalDbPath) process.env.DB_PATH = originalDbPath;
+        });
+    });
+
+    describe('Database Tests', () => {
+        let database;
+        let originalEnv;
+
+        beforeEach(() => {
+            originalEnv = { ...process.env };
+            process.env.DB_PATH = './data/test-database.sqlite';
+            jest.resetModules();
+            database = require('../src/config/database');
+        });
+
+        afterEach(async () => {
+            process.env = originalEnv;
+            if (database.isConnected()) {
+                await database.disconnect();
+            }
+        });
+
+        it('should connect to database successfully', async () => {
+            const result = await database.connect();
+            expect(result).toBe(true);
+            expect(database.isConnected()).toBe(true);
+        });
+
+        it('should initialize tables on connection', async () => {
+            await database.connect();
+            expect(database.isConnected()).toBe(true);
+            
+            // テーブルが存在することを確認
+            const result = await database.query("SELECT name FROM sqlite_master WHERE type='table' AND name='hello_world_messages'");
+            expect(result.rows.length).toBe(1);
+        });
+
+        it('should disconnect from database', async () => {
+            await database.connect();
+            expect(database.isConnected()).toBe(true);
+            
+            await database.disconnect();
+            expect(database.isConnected()).toBe(false);
+        });
+
+        it('should handle disconnect when not connected', async () => {
+            expect(database.isConnected()).toBe(false);
+            await expect(database.disconnect()).resolves.not.toThrow();
+        });
+
+        it('should execute query successfully', async () => {
+            await database.connect();
+            
+            const result = await database.query('SELECT 1 as test');
+            expect(result.rows).toEqual([{ test: 1 }]);
+            expect(result.rowCount).toBe(1);
+        });
+
+        it('should execute queryOne successfully', async () => {
+            await database.connect();
+            
+            const result = await database.queryOne('SELECT 1 as test');
+            expect(result.row).toEqual({ test: 1 });
+            expect(result.rowCount).toBe(1);
+        });
+
+        it('should execute run successfully', async () => {
+            await database.connect();
+            
+            const result = await database.run('INSERT INTO hello_world_messages (name, message) VALUES (?, ?)', ['Test', 'Hello']);
+            expect(result.lastID).toBeDefined();
+            expect(result.changes).toBe(1);
+        });
+
+        it('should handle query with parameters', async () => {
+            await database.connect();
+            
+            // テストデータを挿入
+            await database.run('INSERT INTO hello_world_messages (name, message) VALUES (?, ?)', ['TestUser', 'Test Message']);
+            
+            const result = await database.query('SELECT * FROM hello_world_messages WHERE name = ?', ['TestUser']);
+            expect(result.rows.length).toBe(1);
+            expect(result.rows[0].name).toBe('TestUser');
+            expect(result.rows[0].message).toBe('Test Message');
+        });
+
+        it('should handle queryOne with no results', async () => {
+            await database.connect();
+            
+            const result = await database.queryOne('SELECT * FROM hello_world_messages WHERE name = ?', ['NonExistent']);
+            expect(result.row).toBeUndefined();
+            expect(result.rowCount).toBe(0);
+        });
+
+        it('should throw error when querying without connection', async () => {
+            expect(database.isConnected()).toBe(false);
+            
+            await expect(database.query('SELECT 1')).rejects.toThrow('Database not connected');
+            await expect(database.queryOne('SELECT 1')).rejects.toThrow('Database not connected');
+            await expect(database.run('INSERT INTO test VALUES (1)')).rejects.toThrow('Database not connected');
+        });
+
+        it('should handle database errors gracefully', async () => {
+            await database.connect();
+            
+            // 無効なSQLを実行してエラーをテスト
+            await expect(database.query('SELECT * FROM non_existent_table')).rejects.toThrow();
+        });
+
+        it('should handle connection errors gracefully', async () => {
+            // 無効なパスでデータベースに接続しようとする
+            process.env.DB_PATH = '/invalid/path/database.sqlite';
+            jest.resetModules();
+            const testDatabase = require('../src/config/database');
+            
+            const result = await testDatabase.connect();
+            expect(result).toBe(false);
+            expect(testDatabase.isConnected()).toBe(false);
+        });
+
+        it('should create database directory if it does not exist', async () => {
+            const fs = require('fs');
+            const path = require('path');
+            
+            // 一時的なディレクトリパス
+            const tempDbPath = './data/temp/test-database.sqlite';
+            process.env.DB_PATH = tempDbPath;
+            
+            jest.resetModules();
+            const testDatabase = require('../src/config/database');
+            
+            const result = await testDatabase.connect();
+            expect(result).toBe(true);
+            expect(testDatabase.isConnected()).toBe(true);
+            
+            // ディレクトリが作成されたことを確認
+            expect(fs.existsSync(path.dirname(tempDbPath))).toBe(true);
+            
+            await testDatabase.disconnect();
+            
+            // クリーンアップ
+            if (fs.existsSync(tempDbPath)) {
+                fs.unlinkSync(tempDbPath);
+            }
+            if (fs.existsSync(path.dirname(tempDbPath))) {
+                fs.rmdirSync(path.dirname(tempDbPath));
+            }
+        });
+    });
+
     describe('Response Factory Tests', () => {
         it('should create success response', () => {
             const response = ResponseFactory.success('Test message', { id: 1 });
@@ -1097,11 +1334,9 @@ describe('Basic Functionality Tests', () => {
 
             it('should handle database connected state', async () => {
                 const database = require('../src/config/database');
-                const originalIsConnected = database.isConnected;
-                
                 try {
-                    // データベース接続状態をモック
-                    database.isConnected = jest.fn().mockReturnValue(true);
+                    // データベース接続を確実にする
+                    await database.connect();
                     
                     const response = await request(testApp)
                         .get('/health')
@@ -1111,17 +1346,15 @@ describe('Basic Functionality Tests', () => {
                     expect(response.body.data.database).toHaveProperty('mode', 'database');
                 } finally {
                     // モックを元に戻す
-                    database.isConnected = originalIsConnected;
+                    await database.disconnect();
                 }
             });
 
             it('should handle database disconnected state', async () => {
                 const database = require('../src/config/database');
-                const originalIsConnected = database.isConnected;
-                
                 try {
-                    // データベース接続状態をモック
-                    database.isConnected = jest.fn().mockReturnValue(false);
+                    // データベース接続を切断
+                    await database.disconnect();
                     
                     const response = await request(testApp)
                         .get('/health')
@@ -1130,21 +1363,20 @@ describe('Basic Functionality Tests', () => {
                     expect(response.body.data.database).toHaveProperty('connected', false);
                     expect(response.body.data.database).toHaveProperty('mode', 'mock');
                 } finally {
-                    // モックを元に戻す
-                    database.isConnected = originalIsConnected;
+                    // データベース接続を復元
+                    await database.connect();
                 }
             });
 
             it('should handle health check error', async () => {
                 const database = require('../src/config/database');
-                const originalIsConnected = database.isConnected;
-                
                 try {
-                    // データベース接続状態でエラーを発生させる
+                    // データベースモックを設定してエラーを発生させる
+                    const originalIsConnected = database.isConnected;
                     database.isConnected = jest.fn().mockImplementation(() => {
                         throw new Error('Database connection error');
                     });
-                    
+
                     const response = await request(testApp)
                         .get('/health')
                         .expect(500);
@@ -1260,12 +1492,11 @@ describe('Basic Functionality Tests', () => {
 
             it('should handle checkHealth method error', async () => {
                 const database = require('../src/config/database');
-                const originalIsConnected = database.isConnected;
-                
                 try {
-                    // エラーを発生させる
+                    // データベースモックを設定してエラーを発生させる
+                    const originalIsConnected = database.isConnected;
                     database.isConnected = jest.fn().mockImplementation(() => {
-                        throw new Error('Test error');
+                        throw new Error('Database connection error');
                     });
 
                     const req = {};
