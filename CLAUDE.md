@@ -113,10 +113,49 @@ make format      # Format code (./gradlew ktlintFormat)
 
 ### Node.js + Express Backend (src/nodejs/express/backend/)
 ```bash
+# Using npm directly
 npm install      # Install dependencies
 npm run dev      # Run with nodemon (hot reload)
 npm test         # Run Jest tests
 npm start        # Run production server
+```
+
+### Node.js + Express Simple API (src/nodejs/express/simple-api/)
+```bash
+# Setup and Dependencies
+make install         # Install npm dependencies
+make deps           # Install and update dependencies
+make update-deps    # Update all dependencies to latest versions
+make security-audit # Run npm security audit
+
+# Development
+make start          # Start production server
+make dev            # Start development server with hot reload
+make env-check      # Validate environment configuration
+
+# Testing
+make test           # Run all tests
+make test-watch     # Run tests in watch mode
+make test-coverage  # Run tests with coverage report
+make test-verbose   # Run tests with verbose output
+make test-debug     # Run tests in debug mode
+
+# Build and Maintenance
+make build          # Build the project (no-op for Node.js)
+make clean          # Clean temporary files and coverage
+make lint           # Run linter (placeholder)
+make format         # Format code (placeholder)
+
+# Docker Operations (if docker-compose.yml exists)
+make docker         # Run with Docker Compose (foreground)
+make docker-bg      # Run with Docker Compose (background)
+make docker-down    # Stop Docker Compose
+
+# Utilities
+make kill-port      # Kill processes on backend port (3000)
+make quick-test     # Run tests with coverage (shortcut)
+make full-check     # Run deps, test-coverage, and lint
+make reset          # Clean and reinstall dependencies
 ```
 
 ### TypeScript + Hono Backend (src/nodejs/hono/backend/)
