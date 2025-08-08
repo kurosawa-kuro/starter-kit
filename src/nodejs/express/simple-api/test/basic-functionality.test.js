@@ -280,9 +280,60 @@ describe('🧪 Basic Functionality Suite', () => {
       expect(validateString(undefined, 'x').isValid).toBe(false);
     });
 
+    test('validateString with non-required field returns empty string when value is empty', () => {
+      expect(validateString(undefined, 'field', { required: false })).toEqual({ isValid: true, value: '' });
+      expect(validateString(null, 'field', { required: false })).toEqual({ isValid: true, value: '' });
+      expect(validateString('', 'field', { required: false })).toEqual({ isValid: true, value: '' });
+    });
+
+    test('validateString rejects non-string values', () => {
+      expect(validateString(123, 'field').isValid).toBe(false);
+      expect(validateString(123, 'field').error).toBe('field must be a string');
+    });
+
+    test('validateString enforces minLength', () => {
+      const result = validateString('ab', 'field', { minLength: 3 });
+      expect(result.isValid).toBe(false);
+      expect(result.error).toBe('field must be at least 3 characters long');
+    });
+
+    test('validateString enforces maxLength', () => {
+      const result = validateString('abcde', 'field', { maxLength: 3 });
+      expect(result.isValid).toBe(false);
+      expect(result.error).toBe('field must be no more than 3 characters long');
+    });
+
     test('validateNumber integer enforcement', () => {
       expect(validateNumber('123', 'n', { integer: true }).value).toBe(123);
       expect(validateNumber('1.2', 'n', { integer: true }).isValid).toBe(false);
+    });
+
+    test('validateNumber with non-required field returns null when value is empty', () => {
+      expect(validateNumber(undefined, 'field', { required: false })).toEqual({ isValid: true, value: null });
+      expect(validateNumber(null, 'field', { required: false })).toEqual({ isValid: true, value: null });
+      expect(validateNumber('', 'field', { required: false })).toEqual({ isValid: true, value: null });
+    });
+
+    test('validateNumber rejects invalid numbers', () => {
+      expect(validateNumber('abc', 'field').isValid).toBe(false);
+      expect(validateNumber('abc', 'field').error).toBe('field must be a valid number');
+    });
+
+    test('validateNumber required validation with empty string', () => {
+      expect(validateNumber('', 'field').isValid).toBe(false);
+      expect(validateNumber('', 'field').error).toBe('field is required');
+    });
+
+    test('validateNumber enforces minimum value', () => {
+      const result = validateNumber(5, 'field', { min: 10 });
+      expect(result.isValid).toBe(false);
+      expect(result.error).toBe('field must be at least 10');
+    });
+
+    test('validateNumber enforces maximum value', () => {
+      const result = validateNumber(15, 'field', { max: 10 });
+      expect(result.isValid).toBe(false);
+      expect(result.error).toBe('field must be no more than 10');
     });
 
     test('validateEmail format check', () => {
@@ -300,13 +351,98 @@ describe('🧪 Basic Functionality Suite', () => {
       expect(validateArray('not-array', 'arr').isValid).toBe(false);
     });
 
+    test('validateArray required validation', () => {
+      expect(validateArray(undefined, 'field').isValid).toBe(false);
+      expect(validateArray(undefined, 'field').error).toBe('field is required');
+      expect(validateArray(null, 'field').isValid).toBe(false);
+      expect(validateArray(null, 'field').error).toBe('field is required');
+    });
+
+    test('validateArray with non-required field returns empty array when value is empty', () => {
+      expect(validateArray(undefined, 'field', { required: false })).toEqual({ isValid: true, value: [] });
+      expect(validateArray(null, 'field', { required: false })).toEqual({ isValid: true, value: [] });
+    });
+
+    test('validateArray enforces minimum length', () => {
+      const result = validateArray(['a'], 'field', { minLength: 2 });
+      expect(result.isValid).toBe(false);
+      expect(result.error).toBe('field must have at least 2 items');
+    });
+
+    test('validateArray enforces maximum length', () => {
+      const result = validateArray(['a', 'b', 'c'], 'field', { maxLength: 2 });
+      expect(result.isValid).toBe(false);
+      expect(result.error).toBe('field must have no more than 2 items');
+    });
+
+    test('validateArray with itemValidator validates each item', () => {
+      const itemValidator = (value, fieldName) => validateString(value, fieldName, { minLength: 2 });
+      const result = validateArray(['ab', 'c'], 'field', { itemValidator });
+      expect(result.isValid).toBe(false);
+      expect(result.error).toBe('field[1] must be at least 2 characters long');
+    });
+
     test('validateObject with schema', () => {
       const schema = { name: (v) => validateString(v, 'name') };
       expect(validateObject({ name: 'test' }, 'obj', { schema }).isValid).toBe(true);
     });
 
+    test('validateObject required validation', () => {
+      expect(validateObject(undefined, 'field').isValid).toBe(false);
+      expect(validateObject(undefined, 'field').error).toBe('field is required');
+      expect(validateObject(null, 'field').isValid).toBe(false);
+      expect(validateObject(null, 'field').error).toBe('field is required');
+    });
+
+    test('validateObject with non-required field returns empty object when value is empty', () => {
+      expect(validateObject(undefined, 'field', { required: false })).toEqual({ isValid: true, value: {} });
+      expect(validateObject(null, 'field', { required: false })).toEqual({ isValid: true, value: {} });
+    });
+
+    test('validateObject rejects non-object values including arrays', () => {
+      expect(validateObject('not-object', 'field').isValid).toBe(false);
+      expect(validateObject('not-object', 'field').error).toBe('field must be an object');
+      expect(validateObject(['array'], 'field').isValid).toBe(false);
+      expect(validateObject(['array'], 'field').error).toBe('field must be an object');
+    });
+
+    test('validateObject with schema validation errors', () => {
+      const schema = { 
+        name: (v) => validateString(v, 'name', { minLength: 5 })
+      };
+      const result = validateObject({ name: 'ab' }, 'field', { schema });
+      expect(result.isValid).toBe(false);
+      expect(result.error).toBe('name must be at least 5 characters long');
+    });
+
+    test('validateObject rejects unknown properties when allowUnknown is false', () => {
+      const schema = { name: (v) => validateString(v, 'name') };
+      const result = validateObject({ name: 'test', extra: 'value' }, 'field', { schema, allowUnknown: false });
+      expect(result.isValid).toBe(false);
+      expect(result.error).toBe('Unknown property: extra');
+    });
+
+    test('validateObject with multiple errors combines them', () => {
+      const schema = { 
+        name: (v) => validateString(v, 'name', { minLength: 5 })
+      };
+      const result = validateObject({ name: 'ab', extra1: 'val1', extra2: 'val2' }, 'field', { schema, allowUnknown: false });
+      expect(result.isValid).toBe(false);
+      expect(result.error).toContain('name must be at least 5 characters long');
+      expect(result.error).toContain('Unknown property: extra1');
+      expect(result.error).toContain('Unknown property: extra2');
+    });
+
     test('commonSchemas.pagination', () => {
       expect(commonSchemas.pagination.page('2').value).toBe(2);
+      expect(commonSchemas.pagination.limit('10').value).toBe(10);
+    });
+
+    test('commonSchemas individual validators', () => {
+      expect(commonSchemas.id('123').value).toBe(123);
+      expect(commonSchemas.email('test@example.com').isValid).toBe(true);
+      expect(commonSchemas.name('John Doe').isValid).toBe(true);
+      expect(commonSchemas.message('Hello world').isValid).toBe(true);
     });
 
     test('middleware createValidator', async () => {
@@ -318,6 +454,52 @@ describe('🧪 Basic Functionality Suite', () => {
       vApp.post('/v', createValidator(schema), (req, res) => res.json(req.validated));
       const res = await request(vApp).post('/v').send({ name: 'abc' }).expect(200);
       expect(res.body.body.name).toBe('abc');
+    });
+
+    test('middleware createValidator with body validation errors', async () => {
+      const schema = {
+        body: { name: (v) => validateString(v, 'name', { minLength: 5 }) },
+      };
+      const vApp = express();
+      vApp.use(express.json());
+      vApp.post('/v', createValidator(schema), (req, res) => res.json(req.validated));
+      const res = await request(vApp).post('/v').send({ name: 'ab' }).expect(400);
+      expect(res.body.status).toBe('error');
+      expect(res.body.error).toBe('validation_error');
+    });
+
+    test('middleware createValidator with query validation', async () => {
+      const schema = {
+        query: { page: (v) => validateNumber(v, 'page', { min: 1, integer: true }) },
+      };
+      const vApp = express();
+      vApp.use(express.json());
+      vApp.get('/v', createValidator(schema), (req, res) => res.json(req.validated));
+      
+      // Test successful query validation
+      const successRes = await request(vApp).get('/v?page=2').expect(200);
+      expect(successRes.body.query.page).toBe(2);
+      
+      // Test query validation error
+      const errorRes = await request(vApp).get('/v?page=0').expect(400);
+      expect(errorRes.body.status).toBe('error');
+    });
+
+    test('middleware createValidator with params validation', async () => {
+      const schema = {
+        params: { id: (v) => validateNumber(v, 'id', { min: 1, integer: true }) },
+      };
+      const vApp = express();
+      vApp.use(express.json());
+      vApp.get('/v/:id', createValidator(schema), (req, res) => res.json(req.validated));
+      
+      // Test successful params validation
+      const successRes = await request(vApp).get('/v/123').expect(200);
+      expect(successRes.body.params.id).toBe(123);
+      
+      // Test params validation error
+      const errorRes = await request(vApp).get('/v/0').expect(400);
+      expect(errorRes.body.status).toBe('error');
     });
   });
 
@@ -379,6 +561,7 @@ describe('🧪 Basic Functionality Suite', () => {
   //// --------------------------------------------------------------------
   describe('🗄️ SQLite Wrapper', () => {
     const ORIGINAL_ENV = { ...process.env };
+    const fs = require('fs');
 
     beforeEach(() => {
       process.env.DB_PATH = './data/test-database.sqlite';
@@ -402,7 +585,130 @@ describe('🧪 Basic Functionality Suite', () => {
       await expect(database.query('SELECT 1 as t')).resolves.toEqual({ rows: [{ t: 1 }], rowCount: 1 });
     });
 
-    // その他詳細テストは省略（元ファイル参照）
+    test('directory creation fails', async () => {
+      // Mock fs.existsSync to return false and fs.mkdirSync to throw
+      jest.spyOn(fs, 'existsSync').mockReturnValue(false);
+      jest.spyOn(fs, 'mkdirSync').mockImplementation(() => {
+        throw new Error('Permission denied');
+      });
+
+      const result = await database.connect();
+      expect(result).toBe(false);
+      expect(database.isConnected()).toBe(false);
+
+      fs.existsSync.mockRestore();
+      fs.mkdirSync.mockRestore();
+    });
+
+    test('database connection error in constructor callback', async () => {
+      const sqlite3 = require('sqlite3');
+      const originalDatabase = sqlite3.Database;
+      
+      // Mock SQLite Database constructor to call callback with error
+      sqlite3.Database = function(_path, callback) {
+        process.nextTick(() => callback(new Error('Connection failed')));
+        return { close: jest.fn() };
+      };
+
+      const result = await database.connect();
+      expect(result).toBe(false);
+      expect(database.isConnected()).toBe(false);
+
+      sqlite3.Database = originalDatabase;
+    });
+
+    test('table initialization error', async () => {
+      const sqlite3 = require('sqlite3');
+      const mockRun = jest.fn((_sql, callback) => {
+        callback(new Error('Table creation error'));
+      });
+      const mockDb = { run: mockRun, close: jest.fn() };
+      
+      const originalDatabase = sqlite3.Database;
+      sqlite3.Database = function(_path, callback) {
+        process.nextTick(() => callback(null));
+        return mockDb;
+      };
+
+      const result = await database.connect();
+      expect(result).toBe(false);
+
+      sqlite3.Database = originalDatabase;
+    });
+
+    test('disconnect with close error', async () => {
+      await database.connect();
+      
+      // Mock the close method to trigger an error
+      const mockClose = jest.fn((callback) => {
+        callback(new Error('Close error'));
+      });
+      database.db.close = mockClose;
+
+      await expect(database.disconnect()).resolves.toBeUndefined();
+      expect(database.isConnected()).toBe(false);
+    });
+
+    test('disconnect when db is null', async () => {
+      database.db = null;
+      database.connected = false;
+      
+      await expect(database.disconnect()).resolves.toBeUndefined();
+    });
+
+    test('query when not connected', async () => {
+      database.connected = false;
+      database.db = null;
+      
+      await expect(database.query('SELECT 1')).rejects.toThrow('Database not connected');
+    });
+
+    test('query with database error', async () => {
+      await database.connect();
+      
+      // Mock db.all to trigger error
+      database.db.all = jest.fn((_sql, _params, callback) => {
+        callback(new Error('Query error'));
+      });
+      
+      await expect(database.query('SELECT 1')).rejects.toThrow('Query error');
+    });
+
+    test('queryOne when not connected', async () => {
+      database.connected = false;
+      database.db = null;
+      
+      await expect(database.queryOne('SELECT 1')).rejects.toThrow('Database not connected');
+    });
+
+    test('queryOne with database error', async () => {
+      await database.connect();
+      
+      // Mock db.get to trigger error
+      database.db.get = jest.fn((_sql, _params, callback) => {
+        callback(new Error('QueryOne error'));
+      });
+      
+      await expect(database.queryOne('SELECT 1')).rejects.toThrow('QueryOne error');
+    });
+
+    test('run when not connected', async () => {
+      database.connected = false;
+      database.db = null;
+      
+      await expect(database.run('INSERT INTO test VALUES (1)')).rejects.toThrow('Database not connected');
+    });
+
+    test('run with database error', async () => {
+      await database.connect();
+      
+      // Mock db.run to trigger error
+      database.db.run = jest.fn((_sql, _params, callback) => {
+        callback(new Error('Run error'));
+      });
+      
+      await expect(database.run('INSERT INTO test VALUES (1)')).rejects.toThrow('Run error');
+    });
   });
 
   //// --------------------------------------------------------------------
@@ -526,7 +832,50 @@ describe('🧪 Basic Functionality Suite', () => {
   });
 
   //// --------------------------------------------------------------------
-  //// 10. HelloWorld Controller & Service
+  //// 10. Application (app.js) Integration
+  //// --------------------------------------------------------------------
+  describe('🔧 Application Integration', () => {
+    const mainApp = require('../src/app');
+
+    test('app.js trust proxy condition is covered', () => {
+      // Directly test the trust proxy setting to cover line 34
+      const originalEnv = { ...process.env };
+      
+      // Force trust proxy to true 
+      process.env.TRUST_PROXY = 'true';
+      process.env.NODE_ENV = 'development'; // avoid production overrides
+      
+      // Clear require cache to force reload
+      delete require.cache[require.resolve('../src/config/config')];  
+      delete require.cache[require.resolve('../src/app')];
+      
+      const testConfig = require('../src/config/config');
+      const testApp = require('../src/app');
+      
+      // Verify trust proxy is enabled and line 34 was executed
+      expect(testConfig.trustProxy).toBe(true);
+      expect(testApp.get('trust proxy')).toBe(1);
+      
+      // Restore environment
+      Object.assign(process.env, originalEnv);
+      delete require.cache[require.resolve('../src/config/config')];
+      delete require.cache[require.resolve('../src/app')];
+    });
+
+    test('root endpoint uses health controller', async () => {
+      const res = await request(mainApp).get('/').expect(200);
+      expect(res.body).toEqual(expect.objectContaining({
+        status: 'success',
+        data: expect.objectContaining({
+          name: expect.any(String),
+          version: expect.any(String)
+        })
+      }));
+    });
+  });
+
+  //// --------------------------------------------------------------------
+  //// 11. HelloWorld Controller & Service
   //// --------------------------------------------------------------------
   describe('🌍 HelloWorld Controller & Service', () => {
     const { HelloWorldController } = require('../src/controllers/helloWorld');
