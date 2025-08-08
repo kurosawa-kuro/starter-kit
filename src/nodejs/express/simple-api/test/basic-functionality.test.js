@@ -343,84 +343,317 @@ describe('Basic Functionality Tests', () => {
 
     describe('Response Factory Tests', () => {
         it('should create success response', () => {
-            const response = ResponseFactory.success('Test success', { data: 'test' });
-            const json = response.toJSON();
-            
-            expect(json).toHaveProperty('status', 'success');
-            expect(json).toHaveProperty('message', 'Test success');
-            expect(json).toHaveProperty('data', { data: 'test' });
-            expect(json).toHaveProperty('timestamp');
+            const response = ResponseFactory.success('Test message', { id: 1 });
+            expect(response.status).toBe('success');
+            expect(response.message).toBe('Test message');
+            expect(response.data).toEqual({ id: 1 });
+            expect(response.timestamp).toBeDefined();
+        });
+
+        it('should create success response without data', () => {
+            const response = ResponseFactory.success('Test message');
+            expect(response.status).toBe('success');
+            expect(response.message).toBe('Test message');
+            expect(response.data).toBeUndefined();
+        });
+
+        it('should create success response with meta', () => {
+            const response = ResponseFactory.success('Test message', { id: 1 }, { version: '1.0' });
+            expect(response.meta).toEqual({ version: '1.0' });
         });
 
         it('should create validation error response', () => {
             const response = ResponseFactory.validationError('Validation failed');
-            const json = response.toJSON();
-            
-            expect(json).toHaveProperty('status', 'error');
-            expect(json).toHaveProperty('message', 'Validation failed');
-            expect(json).toHaveProperty('error', 'validation_error');
-            expect(json).toHaveProperty('timestamp');
+            expect(response.status).toBe('error');
+            expect(response.error).toBe('validation_error');
+            expect(response.message).toBe('Validation failed');
+            expect(response.statusCode).toBe(400);
         });
 
         it('should create database error response', () => {
             const response = ResponseFactory.databaseError('Database error');
-            const json = response.toJSON();
-            
-            expect(json).toHaveProperty('status', 'error');
-            expect(json).toHaveProperty('message', 'Database error');
-            expect(json).toHaveProperty('error', 'database_error');
-            expect(json).toHaveProperty('timestamp');
+            expect(response.status).toBe('error');
+            expect(response.error).toBe('database_error');
+            expect(response.message).toBe('Database error');
+            expect(response.statusCode).toBe(500);
         });
 
         it('should create authentication error response', () => {
             const response = ResponseFactory.authenticationError('Auth failed');
-            const json = response.toJSON();
-            
-            expect(json).toHaveProperty('status', 'error');
-            expect(json).toHaveProperty('message', 'Auth failed');
-            expect(json).toHaveProperty('error', 'authentication_error');
-            expect(json).toHaveProperty('timestamp');
+            expect(response.status).toBe('error');
+            expect(response.error).toBe('authentication_error');
+            expect(response.message).toBe('Auth failed');
+            expect(response.statusCode).toBe(401);
         });
 
         it('should create authorization error response', () => {
             const response = ResponseFactory.authorizationError('Access denied');
-            const json = response.toJSON();
-            
-            expect(json).toHaveProperty('status', 'error');
-            expect(json).toHaveProperty('message', 'Access denied');
-            expect(json).toHaveProperty('error', 'authorization_error');
-            expect(json).toHaveProperty('timestamp');
+            expect(response.status).toBe('error');
+            expect(response.error).toBe('authorization_error');
+            expect(response.message).toBe('Access denied');
+            expect(response.statusCode).toBe(403);
         });
 
         it('should create not found error response', () => {
             const response = ResponseFactory.notFoundError('Not found');
-            const json = response.toJSON();
-            
-            expect(json).toHaveProperty('status', 'error');
-            expect(json).toHaveProperty('message', 'Not found');
-            expect(json).toHaveProperty('error', 'not_found');
-            expect(json).toHaveProperty('timestamp');
+            expect(response.status).toBe('error');
+            expect(response.error).toBe('not_found');
+            expect(response.message).toBe('Not found');
+            expect(response.statusCode).toBe(404);
         });
 
         it('should create internal error response', () => {
             const response = ResponseFactory.internalError('Internal error');
-            const json = response.toJSON();
-            
-            expect(json).toHaveProperty('status', 'error');
-            expect(json).toHaveProperty('message', 'Internal error');
-            expect(json).toHaveProperty('error', 'internal_error');
-            expect(json).toHaveProperty('timestamp');
+            expect(response.status).toBe('error');
+            expect(response.error).toBe('internal_error');
+            expect(response.message).toBe('Internal error');
+            expect(response.statusCode).toBe(500);
         });
 
         it('should create rate limit error response', () => {
-            const response = ResponseFactory.rateLimitError('Rate limit exceeded', { retryAfter: 60 });
-            const json = response.toJSON();
-            
-            expect(json).toHaveProperty('status', 'error');
-            expect(json).toHaveProperty('message', 'Rate limit exceeded');
-            expect(json).toHaveProperty('error', 'rate_limit_exceeded');
-            expect(json).toHaveProperty('details', { retryAfter: 60 });
-            expect(json).toHaveProperty('timestamp');
+            const response = ResponseFactory.rateLimitError('Rate limit exceeded');
+            expect(response.status).toBe('error');
+            expect(response.error).toBe('rate_limit_exceeded');
+            expect(response.message).toBe('Rate limit exceeded');
+            expect(response.statusCode).toBe(429);
+        });
+
+        it('should create method not allowed error response', () => {
+            const response = ResponseFactory.methodNotAllowedError('Method not allowed');
+            expect(response.status).toBe('error');
+            expect(response.error).toBe('method_not_allowed');
+            expect(response.message).toBe('Method not allowed');
+            expect(response.statusCode).toBe(405);
+        });
+
+        it('should create service unavailable error response', () => {
+            const response = ResponseFactory.serviceUnavailableError('Service unavailable');
+            expect(response.status).toBe('error');
+            expect(response.error).toBe('service_unavailable');
+            expect(response.message).toBe('Service unavailable');
+            expect(response.statusCode).toBe(503);
+        });
+
+        it('should create gateway timeout error response', () => {
+            const response = ResponseFactory.gatewayTimeoutError('Gateway timeout');
+            expect(response.status).toBe('error');
+            expect(response.error).toBe('gateway_timeout');
+            expect(response.message).toBe('Gateway timeout');
+            expect(response.statusCode).toBe(504);
+        });
+
+        it('should create error response with custom status code', () => {
+            const response = ResponseFactory.error('custom_error', 'Custom error', 422);
+            expect(response.status).toBe('error');
+            expect(response.error).toBe('custom_error');
+            expect(response.message).toBe('Custom error');
+            expect(response.statusCode).toBe(422);
+        });
+
+        it('should create error response with details', () => {
+            const details = { field: 'email', message: 'Invalid email' };
+            const response = ResponseFactory.validationError('Validation failed', details);
+            expect(response.details).toEqual(details);
+        });
+
+        it('should create validation errors', () => {
+            const fieldErrors = [
+                { field: 'email', message: 'Invalid email', value: 'test' },
+                { field: 'password', message: 'Too short', value: '123' }
+            ];
+            const validationErrors = ResponseFactory.createValidationErrors(fieldErrors);
+            expect(validationErrors).toHaveProperty('validationErrors');
+            expect(validationErrors.validationErrors).toHaveLength(2);
+            expect(validationErrors.validationErrors[0]).toEqual(fieldErrors[0]);
+            expect(validationErrors.validationErrors[1]).toEqual(fieldErrors[1]);
+        });
+
+        describe('BaseResponse Tests', () => {
+            it('should create base response with all properties', () => {
+                const { BaseResponse } = require('../src/models/response');
+                const response = new BaseResponse('Test message', { id: 1 }, { version: '1.0' });
+                expect(response.status).toBe('success');
+                expect(response.message).toBe('Test message');
+                expect(response.data).toEqual({ id: 1 });
+                expect(response.meta).toEqual({ version: '1.0' });
+                expect(response.timestamp).toBeDefined();
+            });
+
+            it('should create base response without optional properties', () => {
+                const { BaseResponse } = require('../src/models/response');
+                const response = new BaseResponse('Test message');
+                expect(response.status).toBe('success');
+                expect(response.message).toBe('Test message');
+                expect(response.data).toBeUndefined();
+                expect(response.meta).toBeUndefined();
+            });
+
+            it('should convert to JSON correctly', () => {
+                const { BaseResponse } = require('../src/models/response');
+                const response = new BaseResponse('Test message', { id: 1 }, { version: '1.0' });
+                const json = response.toJSON();
+                expect(json).toHaveProperty('status', 'success');
+                expect(json).toHaveProperty('message', 'Test message');
+                expect(json).toHaveProperty('data', { id: 1 });
+                expect(json).toHaveProperty('meta', { version: '1.0' });
+                expect(json).toHaveProperty('timestamp');
+            });
+
+            it('should convert to JSON without optional properties', () => {
+                const { BaseResponse } = require('../src/models/response');
+                const response = new BaseResponse('Test message');
+                const json = response.toJSON();
+                expect(json).toHaveProperty('status', 'success');
+                expect(json).toHaveProperty('message', 'Test message');
+                expect(json).toHaveProperty('timestamp');
+                expect(json).not.toHaveProperty('data');
+                expect(json).not.toHaveProperty('meta');
+            });
+
+            it('should add meta data', () => {
+                const { BaseResponse } = require('../src/models/response');
+                const response = new BaseResponse('Test message');
+                response.addMeta('version', '1.0');
+                expect(response.meta).toEqual({ version: '1.0' });
+            });
+
+            it('should add multiple meta data', () => {
+                const { BaseResponse } = require('../src/models/response');
+                const response = new BaseResponse('Test message');
+                response.addMeta('version', '1.0');
+                response.addMeta('environment', 'test');
+                expect(response.meta).toEqual({ version: '1.0', environment: 'test' });
+            });
+
+            it('should add pagination information', () => {
+                const { BaseResponse } = require('../src/models/response');
+                const response = new BaseResponse('Test message');
+                response.addPagination(1, 10, 100, 10);
+                expect(response.meta).toHaveProperty('pagination');
+                expect(response.meta.pagination).toEqual({
+                    page: 1,
+                    limit: 10,
+                    total: 100,
+                    totalPages: 10
+                });
+            });
+
+            it('should chain methods', () => {
+                const { BaseResponse } = require('../src/models/response');
+                const response = new BaseResponse('Test message')
+                    .addMeta('version', '1.0')
+                    .addPagination(1, 10, 100, 10);
+                expect(response.meta).toHaveProperty('version', '1.0');
+                expect(response.meta).toHaveProperty('pagination');
+            });
+        });
+
+        describe('ErrorResponse Tests', () => {
+            it('should create error response with all properties', () => {
+                const { ErrorResponse } = require('../src/models/response');
+                const details = { field: 'email', message: 'Invalid email' };
+                const response = new ErrorResponse('validation_error', 'Validation failed', 400, details);
+                expect(response.status).toBe('error');
+                expect(response.error).toBe('validation_error');
+                expect(response.message).toBe('Validation failed');
+                expect(response.statusCode).toBe(400);
+                expect(response.details).toEqual(details);
+                expect(response.timestamp).toBeDefined();
+            });
+
+            it('should create error response without details', () => {
+                const { ErrorResponse } = require('../src/models/response');
+                const response = new ErrorResponse('validation_error', 'Validation failed', 400);
+                expect(response.status).toBe('error');
+                expect(response.error).toBe('validation_error');
+                expect(response.message).toBe('Validation failed');
+                expect(response.statusCode).toBe(400);
+                expect(response.details).toBeUndefined();
+            });
+
+            it('should convert to JSON correctly', () => {
+                const { ErrorResponse } = require('../src/models/response');
+                const details = { field: 'email', message: 'Invalid email' };
+                const response = new ErrorResponse('validation_error', 'Validation failed', 400, details);
+                const json = response.toJSON();
+                expect(json).toHaveProperty('status', 'error');
+                expect(json).toHaveProperty('error', 'validation_error');
+                expect(json).toHaveProperty('message', 'Validation failed');
+                expect(json).toHaveProperty('details', details);
+                expect(json).toHaveProperty('timestamp');
+            });
+
+            it('should convert to JSON without details', () => {
+                const { ErrorResponse } = require('../src/models/response');
+                const response = new ErrorResponse('validation_error', 'Validation failed', 400);
+                const json = response.toJSON();
+                expect(json).toHaveProperty('status', 'error');
+                expect(json).toHaveProperty('error', 'validation_error');
+                expect(json).toHaveProperty('message', 'Validation failed');
+                expect(json).toHaveProperty('timestamp');
+                expect(json).not.toHaveProperty('details');
+            });
+
+            it('should add details', () => {
+                const { ErrorResponse } = require('../src/models/response');
+                const response = new ErrorResponse('validation_error', 'Validation failed', 400);
+                const details = { field: 'email', message: 'Invalid email' };
+                response.addDetails(details);
+                expect(response.details).toEqual(details);
+            });
+
+            it('should add validation errors', () => {
+                const { ErrorResponse } = require('../src/models/response');
+                const response = new ErrorResponse('validation_error', 'Validation failed', 400);
+                const errors = [
+                    { field: 'email', message: 'Invalid email' },
+                    { field: 'password', message: 'Too short' }
+                ];
+                response.addValidationErrors(errors);
+                expect(response.details).toHaveProperty('validationErrors', errors);
+            });
+
+            it('should chain methods', () => {
+                const { ErrorResponse } = require('../src/models/response');
+                const response = new ErrorResponse('validation_error', 'Validation failed', 400)
+                    .addDetails({ field: 'email' })
+                    .addValidationErrors([{ field: 'email', message: 'Invalid' }]);
+                expect(response.details).toHaveProperty('validationErrors');
+            });
+        });
+
+        describe('Constants Tests', () => {
+            it('should have correct error types', () => {
+                const { ErrorTypes } = require('../src/models/response');
+                expect(ErrorTypes.VALIDATION).toBe('validation_error');
+                expect(ErrorTypes.DATABASE).toBe('database_error');
+                expect(ErrorTypes.AUTHENTICATION).toBe('authentication_error');
+                expect(ErrorTypes.AUTHORIZATION).toBe('authorization_error');
+                expect(ErrorTypes.NOT_FOUND).toBe('not_found');
+                expect(ErrorTypes.INTERNAL).toBe('internal_error');
+                expect(ErrorTypes.RATE_LIMIT).toBe('rate_limit_exceeded');
+                expect(ErrorTypes.METHOD_NOT_ALLOWED).toBe('method_not_allowed');
+                expect(ErrorTypes.SERVICE_UNAVAILABLE).toBe('service_unavailable');
+                expect(ErrorTypes.GATEWAY_TIMEOUT).toBe('gateway_timeout');
+            });
+
+            it('should have correct status codes', () => {
+                const { StatusCodes } = require('../src/models/response');
+                expect(StatusCodes.OK).toBe(200);
+                expect(StatusCodes.CREATED).toBe(201);
+                expect(StatusCodes.NO_CONTENT).toBe(204);
+                expect(StatusCodes.BAD_REQUEST).toBe(400);
+                expect(StatusCodes.UNAUTHORIZED).toBe(401);
+                expect(StatusCodes.FORBIDDEN).toBe(403);
+                expect(StatusCodes.NOT_FOUND).toBe(404);
+                expect(StatusCodes.METHOD_NOT_ALLOWED).toBe(405);
+                expect(StatusCodes.CONFLICT).toBe(409);
+                expect(StatusCodes.UNPROCESSABLE_ENTITY).toBe(422);
+                expect(StatusCodes.TOO_MANY_REQUESTS).toBe(429);
+                expect(StatusCodes.INTERNAL_SERVER_ERROR).toBe(500);
+                expect(StatusCodes.SERVICE_UNAVAILABLE).toBe(503);
+                expect(StatusCodes.GATEWAY_TIMEOUT).toBe(504);
+            });
         });
     });
 
