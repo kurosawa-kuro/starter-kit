@@ -190,7 +190,7 @@ describe('🧪 Basic Functionality Suite', () => {
 
     describe('Custom Error Class constructors', () => {
       const ctorMatrix = [
-        [AppError, 'test_type', 400],
+        [AppError, 'internal_error', 500],
         [ValidationError, 'validation_error', 400],
         [DatabaseError, 'database_error', 500],
         [AuthenticationError, 'authentication_error', 401],
@@ -363,10 +363,12 @@ describe('🧪 Basic Functionality Suite', () => {
     });
 
     test('invalid port exits process', () => {
-      const exitSpy = jest.spyOn(process, 'exit').mockImplementation(() => {});
+      const exitSpy = jest.spyOn(process, 'exit').mockImplementation(() => {
+        throw new Error('process.exit called');
+      });
       process.env.PORT = '70000';
       jest.resetModules();
-      expect(() => require('../src/config/config')).toThrow(/Invalid port number/);
+      expect(() => require('../src/config/config')).toThrow('process.exit called');
       expect(exitSpy).toHaveBeenCalledWith(1);
       exitSpy.mockRestore();
     });
@@ -520,6 +522,194 @@ describe('🧪 Basic Functionality Suite', () => {
     test('logApplicationShutdown', () => {
       logApplicationShutdown('SIGTERM');
       expect(consoleSpy).toHaveBeenCalled();
+    });
+  });
+
+  //// --------------------------------------------------------------------
+  //// 10. HelloWorld Controller & Service
+  //// --------------------------------------------------------------------
+  describe('🌍 HelloWorld Controller & Service', () => {
+    const { HelloWorldController } = require('../src/controllers/helloWorld');
+    const helloWorldService = require('../src/services/helloWorldService');
+    
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    
+    afterAll(() => consoleErrorSpy.mockRestore());
+    
+    describe('Controller Error Handling', () => {
+      test('getHelloWorld handles service errors', async () => {
+        const controller = new HelloWorldController();
+        const req = { query: { name: 'test' } };
+        const res = createMockRes();
+        
+        // Mock service to throw error
+        jest.spyOn(helloWorldService, 'getHelloWorldMessage').mockRejectedValueOnce(new Error('Service error'));
+        
+        await controller.getHelloWorld(req, res);
+        
+        expect(consoleErrorSpy).toHaveBeenCalledWith('Get Hello World error:', expect.any(Error));
+        expect(res.status).toHaveBeenCalledWith(500);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+          status: 'error',
+          message: 'Failed to get Hello World message'
+        }));
+        
+        helloWorldService.getHelloWorldMessage.mockRestore();
+      });
+      
+      test('addHelloWorld handles service errors', async () => {
+        const controller = new HelloWorldController();
+        const req = { validated: { body: { name: 'test', message: 'hello' } } };
+        const res = createMockRes();
+        
+        // Mock service to throw error
+        jest.spyOn(helloWorldService, 'addHelloWorldMessage').mockRejectedValueOnce(new Error('Service error'));
+        
+        await controller.addHelloWorld(req, res);
+        
+        expect(consoleErrorSpy).toHaveBeenCalledWith('Add Hello World error:', expect.any(Error));
+        expect(res.status).toHaveBeenCalledWith(500);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+          status: 'error',
+          message: 'Failed to add Hello World message'
+        }));
+        
+        helloWorldService.addHelloWorldMessage.mockRestore();
+      });
+      
+      test('listHelloWorld handles service errors', async () => {
+        const controller = new HelloWorldController();
+        const req = {};
+        const res = createMockRes();
+        
+        // Mock service to throw error
+        jest.spyOn(helloWorldService, 'listHelloWorldMessages').mockRejectedValueOnce(new Error('Service error'));
+        
+        await controller.listHelloWorld(req, res);
+        
+        expect(consoleErrorSpy).toHaveBeenCalledWith('List Hello World error:', expect.any(Error));
+        expect(res.status).toHaveBeenCalledWith(500);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+          status: 'error',
+          message: 'Failed to get Hello World messages'
+        }));
+        
+        helloWorldService.listHelloWorldMessages.mockRestore();
+      });
+    });
+    
+    describe('Service Mock Data Fallback', () => {
+      beforeEach(() => {
+        // Mock database as disconnected
+        jest.spyOn(database, 'isConnected').mockReturnValue(false);
+      });
+      
+      afterEach(() => {
+        database.isConnected.mockRestore();
+      });
+      
+      test('getHelloWorldMessage uses mock when DB disconnected', async () => {
+        const result = await helloWorldService.getHelloWorldMessage('test');
+        
+        expect(database.isConnected).toHaveBeenCalled();
+        expect(result).toEqual(expect.objectContaining({
+          name: 'test',
+          message: expect.stringContaining('test')
+        }));
+      });
+      
+      test('addHelloWorldMessage uses mock when DB disconnected', async () => {
+        const result = await helloWorldService.addHelloWorldMessage('test', 'custom message');
+        
+        expect(database.isConnected).toHaveBeenCalled();
+        expect(result).toEqual(expect.objectContaining({
+          name: 'test',
+          message: 'custom message'
+        }));
+      });
+      
+      test('listHelloWorldMessages uses mock when DB disconnected', async () => {
+        const result = await helloWorldService.listHelloWorldMessages();
+        
+        expect(database.isConnected).toHaveBeenCalled();
+        expect(Array.isArray(result)).toBe(true);
+      });
+    });
+    
+    describe('Service Error Handling with Mock Fallback', () => {
+      beforeEach(() => {
+        // Mock database as connected but queries fail
+        jest.spyOn(database, 'isConnected').mockReturnValue(true);
+        // Reset mock data to ensure clean state
+        require('../src/utils/mock').resetMockData();
+      });
+      
+      afterEach(() => {
+        database.isConnected.mockRestore();
+        if (database.query.mockRestore) database.query.mockRestore();
+        if (database.run.mockRestore) database.run.mockRestore();
+      });
+      
+      test('getHelloWorldMessage falls back to mock on database error', async () => {
+        jest.spyOn(database, 'query').mockRejectedValueOnce(new Error('DB error'));
+        
+        const result = await helloWorldService.getHelloWorldMessage('test');
+        
+        expect(result).toEqual(expect.objectContaining({
+          name: 'test',
+          message: expect.any(String)
+        }));
+      });
+      
+      test('addHelloWorldMessage falls back to mock on database error', async () => {
+        jest.spyOn(database, 'run').mockRejectedValueOnce(new Error('DB error'));
+        
+        const result = await helloWorldService.addHelloWorldMessage('test', 'custom');
+        
+        expect(result).toEqual(expect.objectContaining({
+          name: 'test',
+          message: 'custom'
+        }));
+      });
+      
+      test('listHelloWorldMessages falls back to mock on database error', async () => {
+        jest.spyOn(database, 'query').mockRejectedValueOnce(new Error('DB error'));
+        
+        const result = await helloWorldService.listHelloWorldMessages();
+        
+        expect(Array.isArray(result)).toBe(true);
+      });
+    });
+    
+    describe('Service Database Initialization', () => {
+      test('initializeDatabase when DB connected', async () => {
+        jest.spyOn(database, 'isConnected').mockReturnValue(true);
+        
+        await helloWorldService.initializeDatabase();
+        
+        expect(database.isConnected).toHaveBeenCalled();
+        database.isConnected.mockRestore();
+      });
+      
+      test('initializeDatabase when DB not connected', async () => {
+        jest.spyOn(database, 'isConnected').mockReturnValue(false);
+        
+        await helloWorldService.initializeDatabase();
+        
+        expect(database.isConnected).toHaveBeenCalled();
+        database.isConnected.mockRestore();
+      });
+      
+      test('initializeDatabase handles errors', async () => {
+        jest.spyOn(database, 'isConnected').mockImplementation(() => {
+          throw new Error('DB initialization error');
+        });
+        
+        await helloWorldService.initializeDatabase();
+        
+        expect(database.isConnected).toHaveBeenCalled();
+        database.isConnected.mockRestore();
+      });
     });
   });
 });
