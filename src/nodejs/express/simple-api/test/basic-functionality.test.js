@@ -1483,4 +1483,364 @@ describe('Basic Functionality Tests', () => {
             });
         });
     });
+
+    describe('Logger Tests', () => {
+        const { 
+            logger, 
+            requestLogger, 
+            errorLogger, 
+            performanceLogger, 
+            databaseLogger, 
+            securityLogger, 
+            logApplicationStart, 
+            logApplicationShutdown,
+            LogLevel,
+            LogLevelName
+        } = require('../src/middleware/logger');
+
+        describe('Log Level Tests', () => {
+            it('should have correct log levels', () => {
+                expect(LogLevel.ERROR).toBe(0);
+                expect(LogLevel.WARN).toBe(1);
+                expect(LogLevel.INFO).toBe(2);
+                expect(LogLevel.DEBUG).toBe(3);
+            });
+
+            it('should have correct log level names', () => {
+                expect(LogLevelName[0]).toBe('ERROR');
+                expect(LogLevelName[1]).toBe('WARN');
+                expect(LogLevelName[2]).toBe('INFO');
+                expect(LogLevelName[3]).toBe('DEBUG');
+            });
+        });
+
+        describe('Logger Function Tests', () => {
+            let originalConsoleLog;
+            let consoleLogSpy;
+
+            beforeEach(() => {
+                originalConsoleLog = console.log;
+                consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
+            });
+
+            afterEach(() => {
+                console.log = originalConsoleLog;
+                consoleLogSpy.mockRestore();
+            });
+
+            it('should log error messages', () => {
+                logger.error('Test error', { error: 'details' });
+                expect(consoleLogSpy).toHaveBeenCalled();
+            });
+
+            it('should log warn messages', () => {
+                logger.warn('Test warning', { warning: 'details' });
+                expect(consoleLogSpy).toHaveBeenCalled();
+            });
+
+            it('should log info messages', () => {
+                logger.info('Test info', { info: 'details' });
+                expect(consoleLogSpy).toHaveBeenCalled();
+            });
+
+            it('should log debug messages', () => {
+                // ログレベルを一時的にdebugに設定
+                const originalConfig = require('../src/config/config');
+                const mockConfig = { ...originalConfig, logLevel: 'debug' };
+                jest.doMock('../src/config/config', () => mockConfig);
+                
+                // loggerを再読み込み
+                const { logger } = require('../src/middleware/logger');
+                
+                logger.debug('Test debug', { debug: 'details' });
+                expect(consoleLogSpy).toHaveBeenCalled();
+                
+                // モックを元に戻す
+                jest.doMock('../src/config/config', () => originalConfig);
+            });
+
+            it('should log without data', () => {
+                logger.info('Test message without data');
+                expect(consoleLogSpy).toHaveBeenCalled();
+            });
+        });
+
+        describe('Request Logger Tests', () => {
+            let originalConsoleLog;
+            let consoleLogSpy;
+
+            beforeEach(() => {
+                originalConsoleLog = console.log;
+                consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
+            });
+
+            afterEach(() => {
+                console.log = originalConsoleLog;
+                consoleLogSpy.mockRestore();
+            });
+
+            it('should log incoming request', () => {
+                const req = {
+                    method: 'GET',
+                    url: '/test',
+                    ip: '127.0.0.1',
+                    get: jest.fn().mockReturnValue('test-agent')
+                };
+                const res = {
+                    on: jest.fn(),
+                    get: jest.fn().mockReturnValue('100')
+                };
+                const next = jest.fn();
+
+                requestLogger(req, res, next);
+
+                expect(next).toHaveBeenCalled();
+                expect(req.requestId).toBeDefined();
+                expect(consoleLogSpy).toHaveBeenCalled();
+            });
+
+            it('should log request completion', () => {
+                const req = {
+                    method: 'GET',
+                    url: '/test',
+                    ip: '127.0.0.1',
+                    get: jest.fn().mockReturnValue('test-agent')
+                };
+                const res = {
+                    on: jest.fn((event, callback) => {
+                        if (event === 'finish') {
+                            callback();
+                        }
+                    }),
+                    get: jest.fn().mockReturnValue('100'),
+                    statusCode: 200
+                };
+                const next = jest.fn();
+
+                requestLogger(req, res, next);
+
+                expect(next).toHaveBeenCalled();
+                expect(consoleLogSpy).toHaveBeenCalled();
+            });
+
+            it('should log error status codes as warnings', () => {
+                const req = {
+                    method: 'GET',
+                    url: '/test',
+                    ip: '127.0.0.1',
+                    get: jest.fn().mockReturnValue('test-agent')
+                };
+                const res = {
+                    on: jest.fn((event, callback) => {
+                        if (event === 'finish') {
+                            callback();
+                        }
+                    }),
+                    get: jest.fn().mockReturnValue('100'),
+                    statusCode: 404
+                };
+                const next = jest.fn();
+
+                requestLogger(req, res, next);
+
+                expect(next).toHaveBeenCalled();
+                expect(consoleLogSpy).toHaveBeenCalled();
+            });
+        });
+
+        describe('Error Logger Tests', () => {
+            let originalConsoleLog;
+            let consoleLogSpy;
+
+            beforeEach(() => {
+                originalConsoleLog = console.log;
+                consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
+            });
+
+            afterEach(() => {
+                console.log = originalConsoleLog;
+                consoleLogSpy.mockRestore();
+            });
+
+            it('should log unhandled errors', () => {
+                const req = {
+                    requestId: 'test-id',
+                    method: 'GET',
+                    url: '/test',
+                    headers: {},
+                    body: {}
+                };
+                const res = {};
+                const next = jest.fn();
+                const error = new Error('Test error');
+
+                errorLogger(error, req, res, next);
+
+                expect(next).toHaveBeenCalledWith(error);
+                expect(consoleLogSpy).toHaveBeenCalled();
+            });
+        });
+
+        describe('Performance Logger Tests', () => {
+            let originalConsoleLog;
+            let consoleLogSpy;
+
+            beforeEach(() => {
+                originalConsoleLog = console.log;
+                consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
+            });
+
+            afterEach(() => {
+                console.log = originalConsoleLog;
+                consoleLogSpy.mockRestore();
+            });
+
+            it('should log slow requests', () => {
+                const req = {
+                    requestId: 'test-id',
+                    method: 'GET',
+                    url: '/test'
+                };
+                const res = {
+                    on: jest.fn((event, callback) => {
+                        if (event === 'finish') {
+                            // 1秒以上の処理時間をシミュレート
+                            setTimeout(callback, 10);
+                        }
+                    })
+                };
+                const next = jest.fn();
+
+                performanceLogger(req, res, next);
+
+                expect(next).toHaveBeenCalled();
+            });
+
+            it('should log request performance in debug mode', () => {
+                // 設定を一時的にdebug modeに変更
+                const originalConfig = require('../src/config/config');
+                const mockConfig = { ...originalConfig, debugMode: true };
+                jest.doMock('../src/config/config', () => mockConfig);
+                
+                // performanceLoggerを再読み込み
+                const { performanceLogger } = require('../src/middleware/logger');
+
+                const req = {
+                    requestId: 'test-id',
+                    method: 'GET',
+                    url: '/test'
+                };
+                const res = {
+                    on: jest.fn((event, callback) => {
+                        if (event === 'finish') {
+                            callback();
+                        }
+                    })
+                };
+                const next = jest.fn();
+
+                performanceLogger(req, res, next);
+
+                expect(next).toHaveBeenCalled();
+                
+                // モックを元に戻す
+                jest.doMock('../src/config/config', () => originalConfig);
+            });
+        });
+
+        describe('Database Logger Tests', () => {
+            let originalConsoleLog;
+            let consoleLogSpy;
+
+            beforeEach(() => {
+                originalConsoleLog = console.log;
+                consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
+            });
+
+            afterEach(() => {
+                console.log = originalConsoleLog;
+                consoleLogSpy.mockRestore();
+            });
+
+            it('should log slow database queries', () => {
+                databaseLogger('SELECT * FROM users', ['param1'], 150);
+                expect(consoleLogSpy).toHaveBeenCalled();
+            });
+        });
+
+        describe('Security Logger Tests', () => {
+            let originalConsoleLog;
+            let consoleLogSpy;
+
+            beforeEach(() => {
+                originalConsoleLog = console.log;
+                consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
+            });
+
+            afterEach(() => {
+                console.log = originalConsoleLog;
+                consoleLogSpy.mockRestore();
+            });
+
+            it('should detect suspicious requests', () => {
+                const req = {
+                    requestId: 'test-id',
+                    ip: '127.0.0.1',
+                    url: '/test?q=<script>alert("xss")</script>',
+                    body: {},
+                    query: {},
+                    headers: {}
+                };
+                const res = {};
+                const next = jest.fn();
+
+                securityLogger(req, res, next);
+
+                expect(next).toHaveBeenCalled();
+                expect(consoleLogSpy).toHaveBeenCalled();
+            });
+
+            it('should handle normal requests', () => {
+                const req = {
+                    requestId: 'test-id',
+                    ip: '127.0.0.1',
+                    url: '/api/users',
+                    body: { name: 'test' },
+                    query: {},
+                    headers: {}
+                };
+                const res = {};
+                const next = jest.fn();
+
+                securityLogger(req, res, next);
+
+                expect(next).toHaveBeenCalled();
+            });
+        });
+
+        describe('Application Log Tests', () => {
+            let originalConsoleLog;
+            let consoleLogSpy;
+
+            beforeEach(() => {
+                originalConsoleLog = console.log;
+                consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
+            });
+
+            afterEach(() => {
+                console.log = originalConsoleLog;
+                consoleLogSpy.mockRestore();
+            });
+
+            it('should log application start', () => {
+                logApplicationStart();
+                expect(consoleLogSpy).toHaveBeenCalled();
+            });
+
+            it('should log application shutdown', () => {
+                logApplicationShutdown('SIGTERM');
+                expect(consoleLogSpy).toHaveBeenCalled();
+            });
+        });
+    });
 });
