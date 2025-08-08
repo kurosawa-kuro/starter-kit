@@ -13,11 +13,16 @@
  */
 
 //// ========================================================================
-////  共通インポート & ヘルパ
+////  共通インポート & モック（1箇所集約）
 //// ========================================================================
 
+// ── Core Testing ──────────────────────────────────────────────────────────
 const request = require('supertest');
 const express = require('express');
+
+// ── Application Modules ───────────────────────────────────────────────────
+const config = require('../src/config/config');
+const database = require('../src/config/database');
 
 // ── Middleware & Utils ────────────────────────────────────────────────────
 const {
@@ -53,12 +58,6 @@ const {
   API_CONSTANTS,
   APP_INFO,
 } = require('../src/utils/constants');
-
-// ── Models & Controllers ──────────────────────────────────────────────────
-const { ResponseFactory, BaseResponse, ErrorResponse, ErrorTypes, StatusCodes } = require('../src/models/response');
-const healthController = require('../src/controllers/health');
-
-// ── Logger ────────────────────────────────────────────────────────────────
 const {
   logger,
   requestLogger,
@@ -72,12 +71,26 @@ const {
   LogLevelName,
 } = require('../src/middleware/logger');
 
-// ── Config & Database ─────────────────────────────────────────────────────
-const config = require('../src/config/config');
-const database = require('../src/config/database');
+// ── Models & Controllers ──────────────────────────────────────────────────
+const { ResponseFactory, BaseResponse, ErrorResponse, ErrorTypes, StatusCodes } = require('../src/models/response');
+const healthController = require('../src/controllers/health');
+
+// ── Global Mocks & Spies ──────────────────────────────────────────────────
+let consoleSpy, consoleErrorSpy;
+
+// ── Mock Setup Functions ──────────────────────────────────────────────────
+function setupGlobalMocks() {
+  consoleSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+  consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+}
+
+function teardownGlobalMocks() {
+  if (consoleSpy) consoleSpy.mockRestore();
+  if (consoleErrorSpy) consoleErrorSpy.mockRestore();
+}
 
 //// ========================================================================
-////  Test Helper Constants & Functions
+////  共通ユーティリティ（❹ 上部配置）
 //// ========================================================================
 
 // ── Test Data Constants ──────────────────────────────────────────────────
@@ -100,7 +113,7 @@ const ERROR_CONSTRUCTOR_MATRIX = [
   [NotFoundError, 'not_found', 404],
 ];
 
-// ── Test Helper Functions ─────────────────────────────────────────────────
+// ── Helper Functions ──────────────────────────────────────────────────────
 
 /**
  * Create a new Express app instance with basic routes for each test run.
@@ -148,46 +161,31 @@ function createMockRes() {
 describe('🧪 Basic Functionality Suite', () => {
   let app;
 
+  // 重複初期化を解消（❷）
+  beforeAll(() => {
+    setupGlobalMocks();
+  });
+
+  afterAll(() => {
+    teardownGlobalMocks();
+  });
+
   beforeEach(() => {
     app = createTestApp();
   });
 
   //// --------------------------------------------------------------------
-  //// 1. Constants & Utils
+  //// 1. Constants & Utils（❸データドリブン化）
   //// --------------------------------------------------------------------
-  describe('📦 Constants', () => {
-    test('HTTP_STATUS mapping', () => {
-      expect(HTTP_STATUS).toMatchObject({
-        OK: 200,
-        CREATED: 201,
-        BAD_REQUEST: 400,
-        UNAUTHORIZED: 401,
-        FORBIDDEN: 403,
-        NOT_FOUND: 404,
-        INTERNAL_SERVER_ERROR: 500,
-      });
-    });
+  describe.each([
+    ['HTTP_STATUS', HTTP_STATUS, { OK: 200, CREATED: 201, BAD_REQUEST: 400, UNAUTHORIZED: 401, FORBIDDEN: 403, NOT_FOUND: 404, INTERNAL_SERVER_ERROR: 500 }],
+    ['ERROR_TYPES', ERROR_TYPES, { VALIDATION_ERROR: 'validation_error', DATABASE_ERROR: 'database_error', AUTHENTICATION_ERROR: 'authentication_error', AUTHORIZATION_ERROR: 'authorization_error', NOT_FOUND: 'not_found', INTERNAL_ERROR: 'internal_error' }],
+    ['LOG_LEVELS', LOG_LEVELS, { ERROR: 'error', WARN: 'warn', INFO: 'info', DEBUG: 'debug' }],
+  ])('📦 Constants %s mapping', (name, actual, expected) => {
+    test(`validates ${name} mapping`, () => expect(actual).toMatchObject(expected));
+  });
 
-    test('ERROR_TYPES mapping', () => {
-      expect(ERROR_TYPES).toMatchObject({
-        VALIDATION_ERROR: 'validation_error',
-        DATABASE_ERROR: 'database_error',
-        AUTHENTICATION_ERROR: 'authentication_error',
-        AUTHORIZATION_ERROR: 'authorization_error',
-        NOT_FOUND: 'not_found',
-        INTERNAL_ERROR: 'internal_error',
-      });
-    });
-
-    test('LOG_LEVELS mapping', () => {
-      expect(LOG_LEVELS).toMatchObject({
-        ERROR: 'error',
-        WARN: 'warn',
-        INFO: 'info',
-        DEBUG: 'debug',
-      });
-    });
-
+  describe('📦 Additional Constants', () => {
     test('API & APP constants', () => {
       expect(API_CONSTANTS).toMatchObject({ VERSION: 'v1', PREFIX: '/api', HEALTH_ENDPOINT: '/health' });
       expect(APP_INFO).toMatchObject({ NAME: 'Hello World API', VERSION: '1.0.0' });
@@ -204,12 +202,10 @@ describe('🧪 Basic Functionality Suite', () => {
       if (type) expect(res.body.error).toBe(type);
     });
 
-    describe('Custom Error Class constructors', () => {
-      test.each(ERROR_CONSTRUCTOR_MATRIX)('%p constructs properly', (Ctor, type, status) => {
-        const err = new Ctor('msg');
-        expect(err).toMatchObject({ message: 'msg', type, status });
-        expect(err.name).toBe(Ctor.name);
-      });
+    test.each(ERROR_CONSTRUCTOR_MATRIX)('Custom Error %p constructs properly', (Ctor, type, status) => {
+      const err = new Ctor('msg');
+      expect(err).toMatchObject({ message: 'msg', type, status });
+      expect(err.name).toBe(Ctor.name);
     });
   });
 
@@ -348,23 +344,22 @@ describe('🧪 Basic Functionality Suite', () => {
   });
 
   //// --------------------------------------------------------------------
-  //// 4. Validator
+  //// 4. Validator（❸データドリブン化）
   //// --------------------------------------------------------------------
   describe('🛡️ Validator', () => {
-    test('validateString basics', () => {
-      expect(validateString('abc', 'x').isValid).toBe(true);
-      expect(validateString(undefined, 'x').isValid).toBe(false);
-    });
-
-    test('validateString with non-required field returns empty string when value is empty', () => {
-      expect(validateString(undefined, 'field', { required: false })).toEqual({ isValid: true, value: '' });
-      expect(validateString(null, 'field', { required: false })).toEqual({ isValid: true, value: '' });
-      expect(validateString('', 'field', { required: false })).toEqual({ isValid: true, value: '' });
-    });
-
-    test('validateString rejects non-string values', () => {
-      expect(validateString(123, 'field').isValid).toBe(false);
-      expect(validateString(123, 'field').error).toBe('field must be a string');
+    // String validation matrix
+    describe.each([
+      ['abc', 'x', {}, true],
+      [undefined, 'x', {}, false],
+      [123, 'field', {}, false],
+      [undefined, 'field', { required: false }, true],
+      [null, 'field', { required: false }, true],
+      ['', 'field', { required: false }, true],
+    ])('String validation: %p', (value, fieldName, options, expectedValid) => {
+      test(`validateString('${value}', '${fieldName}') → ${expectedValid}`, () => {
+        const result = validateString(value, fieldName, options);
+        expect(result.isValid).toBe(expectedValid);
+      });
     });
 
     test('validateString enforces minLength', () => {
@@ -941,11 +936,6 @@ describe('🧪 Basic Functionality Suite', () => {
   //// 9. Logger
   //// --------------------------------------------------------------------
   describe('📝 Logger', () => {
-    const consoleSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
-
-    afterAll(() => {
-      consoleSpy.mockRestore();
-    });
 
     test('LogLevel enums', () => {
       expect(LogLevel.ERROR).toBe(0);
@@ -1128,12 +1118,6 @@ describe('🧪 Basic Functionality Suite', () => {
   describe('🌍 HelloWorld Controller & Service', () => {
     const { HelloWorldController } = require('../src/controllers/helloWorld');
     const helloWorldService = require('../src/services/helloWorldService');
-    
-    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-    
-    afterAll(() => {
-      consoleErrorSpy.mockRestore();
-    });
     
     describe('Controller Error Handling', () => {
       test('getHelloWorld handles service errors', async () => {
