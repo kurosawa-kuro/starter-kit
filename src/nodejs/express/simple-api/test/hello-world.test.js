@@ -4,127 +4,45 @@
  */
 
 const request = require('supertest');
-const path = require('path');
-const fs = require('fs');
 
 // テスト用設定を読み込み
 const {
     TEST_DB_PATH,
     initializeTestDatabase,
     cleanupTestDatabase,
-    insertTestData,
-    getTestData,
-    clearTestDatabase
+    insertTestData
 } = require('./test-setup');
 
-// テスト用環境変数を設定
-process.env.NODE_ENV = 'test';
-process.env.DB_PATH = TEST_DB_PATH;
-process.env.MOCK_MODE = 'false';
-process.env.DEBUG_MODE = 'false';
-process.env.LOG_LEVEL = 'error';
+
 
 // アプリケーションを読み込み
-const express = require('express');
-const cors = require('cors');
-const helmet = require('helmet');
-require('dotenv').config();
-
-// テスト用設定を読み込み
-const config = require('../src/config/config');
-
-// ミドルウェア読み込み
-const { errorHandler, notFoundHandler } = require('../src/middleware/errorHandler');
-const { rateLimiter } = require('../src/middleware/rateLimiter');
-const { requestLogger, errorLogger, performanceLogger, securityLogger } = require('../src/middleware/logger');
-
-// ルーティング読み込み
-const apiRoutes = require('../src/routes/routes');
-
-// テスト用Expressアプリケーションを作成
-const app = express();
-
-// セキュリティミドルウェア
-if (config.helmetEnabled) {
-    app.use(helmet());
-}
-
-// CORS設定
-app.use(cors({
-    origin: config.corsOrigin,
-    credentials: config.corsCredentials,
-    methods: config.corsMethods.split(','),
-    allowedHeaders: config.corsHeaders.split(',')
-}));
-
-// リクエストボディパーサー
-app.use(express.json({ limit: config.requestSizeLimit }));
-app.use(express.urlencoded({ extended: true, limit: config.requestSizeLimit }));
-
-// ログミドルウェア
-app.use(requestLogger);
-app.use(performanceLogger);
-app.use(securityLogger);
-
-// レート制限ミドルウェア
-app.use(rateLimiter);
-
-// ルートエンドポイント
-app.get('/', (req, res) => {
-    const healthController = require('../src/controllers/health');
-    healthController.getAppInfo(req, res);
-});
-
-// APIルート
-app.use(config.apiPrefix, apiRoutes);
-
-// 404エラーハンドラー
-app.use('*', notFoundHandler);
-
-// エラーログミドルウェア
-app.use(errorLogger);
-
-// エラーハンドリングミドルウェア
-app.use(errorHandler);
+const app = require('../src/app');
 
 describe('Hello World API - SQLite Tests', () => {
-    // テスト前のセットアップ
     beforeAll(async () => {
         try {
             await initializeTestDatabase();
-            
-            // テスト用データベースに接続
             const database = require('../src/config/database');
             await database.connect();
-            
-            console.log('✅ Test database initialized and connected');
         } catch (error) {
             console.error('❌ Failed to initialize test database:', error);
             throw error;
         }
     });
 
-    // テスト後のクリーンアップ
     afterAll(async () => {
         try {
-            // データベース接続を切断
             const database = require('../src/config/database');
             await database.disconnect();
-            
             await cleanupTestDatabase();
-            console.log('✅ Test database cleaned up');
         } catch (error) {
             console.error('❌ Failed to cleanup test database:', error);
         }
     });
 
-    // 各テスト前のデータクリア
     beforeEach(async () => {
         try {
-            // テスト用データベースを再初期化
             await initializeTestDatabase();
-            
-            // データベース接続を再確立
             const database = require('../src/config/database');
             await database.connect();
         } catch (error) {

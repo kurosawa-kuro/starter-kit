@@ -24,10 +24,19 @@ module.exports = {
     collectCoverage: true,
     coverageDirectory: 'coverage',
     coverageReporters: ['text', 'lcov', 'html'],
+    coveragePathIgnorePatterns: [
+        '/node_modules/',
+        '/test/',
+        '/coverage/',
+        'src/server.js',
+        'src/utils/mock.js'
+    ],
     collectCoverageFrom: [
         'src/**/*.js',
         '!src/**/*.test.js',
-        '!src/test/**/*.js'
+        '!src/test/**/*.js',
+        '!src/server.js',
+        '!src/utils/mock.js'
     ],
     
     // テストタイムアウト
@@ -48,6 +57,5 @@ module.exports = {
     // テスト実行時の出力
     silent: false,
     
-    // テストファイルの実行順序
-    testSequencer: '<rootDir>/test/test-sequencer.js'
+
 };

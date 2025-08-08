@@ -122,67 +122,11 @@ function insertTestData(testData) {
     });
 }
 
-/**
- * テスト用データベースからデータを取得
- */
-function getTestData() {
-    return new Promise((resolve, reject) => {
-        const db = new sqlite3.Database(TEST_DB_PATH, (err) => {
-            if (err) {
-                reject(err);
-                return;
-            }
 
-            db.all('SELECT * FROM hello_world_messages ORDER BY created_at DESC', (err, rows) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    db.close((err) => {
-                        if (err) {
-                            reject(err);
-                        } else {
-                            resolve(rows);
-                        }
-                    });
-                }
-            });
-        });
-    });
-}
-
-/**
- * テスト用データベースをクリア
- */
-function clearTestDatabase() {
-    return new Promise((resolve, reject) => {
-        const db = new sqlite3.Database(TEST_DB_PATH, (err) => {
-            if (err) {
-                reject(err);
-                return;
-            }
-
-            db.run('DELETE FROM hello_world_messages', (err) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    db.close((err) => {
-                        if (err) {
-                            reject(err);
-                        } else {
-                            resolve();
-                        }
-                    });
-                }
-            });
-        });
-    });
-}
 
 module.exports = {
     TEST_DB_PATH,
     initializeTestDatabase,
     cleanupTestDatabase,
-    insertTestData,
-    getTestData,
-    clearTestDatabase
+    insertTestData
 };
