@@ -1332,26 +1332,6 @@ describe('Basic Functionality Tests', () => {
                 expect(typeof response.body.data.database.mode).toBe('string');
             });
 
-            // it('should handle database connected state', async () => {
-            //     const database = require('../src/config/database');
-            //     try {
-            //         // データベース接続を確実にする
-            //         await database.connect();
-                    
-            //         // データベースの接続状態を直接確認
-            //         expect(database.isConnected()).toBe(true);
-                    
-            //         const response = await request(testApp)
-            //             .get('/health')
-            //             .expect(200);
-
-            //         expect(response.body.data.database).toHaveProperty('connected', true);
-            //         expect(response.body.data.database).toHaveProperty('mode', 'database');
-            //     } finally {
-            //         // データベース接続を復元
-            //         await database.disconnect();
-            //     }
-            // });
 
             it('should handle database disconnected state', async () => {
                 const database = require('../src/config/database');
@@ -1370,27 +1350,6 @@ describe('Basic Functionality Tests', () => {
                     await database.connect();
                 }
             });
-
-            // it('should handle health check error', async () => {
-            //     const database = require('../src/config/database');
-            //     try {
-            //         // データベースモックを設定してエラーを発生させる
-            //         const originalIsConnected = database.isConnected;
-            //         database.isConnected = jest.fn().mockImplementation(() => {
-            //             throw new Error('Database connection error');
-            //         });
-
-            //         const response = await request(testApp)
-            //             .get('/health')
-            //             .expect(500);
-
-            //         expect(response.body).toHaveProperty('status', 'error');
-            //         expect(response.body).toHaveProperty('message', 'Health check failed');
-            //     } finally {
-            //         // モックを元に戻す
-            //         database.isConnected = originalIsConnected;
-            //     }
-            // });
         });
 
         describe('getAppInfo', () => {
@@ -1493,34 +1452,6 @@ describe('Basic Functionality Tests', () => {
                 expect(responseData).toHaveProperty('message', 'Application info retrieved');
             });
 
-            // it('should handle checkHealth method error', async () => {
-            //     const database = require('../src/config/database');
-            //     try {
-            //         // データベースモックを設定してエラーを発生させる
-            //         const originalIsConnected = database.isConnected;
-            //         database.isConnected = jest.fn().mockImplementation(() => {
-            //             throw new Error('Database connection error');
-            //         });
-
-            //         const req = {};
-            //         const res = {
-            //             status: jest.fn().mockReturnThis(),
-            //             json: jest.fn()
-            //         };
-
-            //         await healthController.checkHealth(req, res);
-
-            //         expect(res.status).toHaveBeenCalledWith(500);
-            //         expect(res.json).toHaveBeenCalled();
-                    
-            //         const responseData = res.json.mock.calls[0][0];
-            //         expect(responseData).toHaveProperty('status', 'error');
-            //         expect(responseData).toHaveProperty('message', 'Health check failed');
-            //     } finally {
-            //         // モックを元に戻す
-            //         database.isConnected = originalIsConnected;
-            //     }
-            // });
 
             it('should handle getAppInfo method error', async () => {
                 // エラーを発生させるために、ResponseFactoryを一時的にモック
