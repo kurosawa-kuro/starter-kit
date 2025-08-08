@@ -82,6 +82,7 @@ function cleanupTestDatabase() {
 
 /**
  * テスト用データベースにテストデータを挿入
+ * データの挿入順序を保証するため、順次実行する
  */
 function insertTestData(testData) {
     return new Promise((resolve, reject) => {
@@ -91,23 +92,33 @@ function insertTestData(testData) {
                 return;
             }
 
-            const insertPromises = testData.map(data => {
-                return new Promise((resolve, reject) => {
-                    const sql = `
-                        INSERT INTO hello_world_messages (name, message, created_at, updated_at)
-                        VALUES (?, ?, datetime('now'), datetime('now'))
-                    `;
-                    db.run(sql, [data.name, data.message], function(err) {
-                        if (err) {
-                            reject(err);
-                        } else {
-                            resolve(this.lastID);
-                        }
-                    });
-                });
-            });
+            // 順次挿入を保証するため、forループとawaitを使用
+            const insertSequentially = async () => {
+                try {
+                    for (let i = 0; i < testData.length; i++) {
+                        const data = testData[i];
+                        await new Promise((resolve, reject) => {
+                            // 挿入順序を保証するため、明示的にcreated_atに異なる値を設定
+                            const timestamp = new Date(Date.now() + i * 100).toISOString(); // 100ms間隔
+                            const sql = `
+                                INSERT INTO hello_world_messages (name, message, created_at, updated_at)
+                                VALUES (?, ?, ?, ?)
+                            `;
+                            db.run(sql, [data.name, data.message, timestamp, timestamp], function(err) {
+                                if (err) {
+                                    reject(err);
+                                } else {
+                                    resolve(this.lastID);
+                                }
+                            });
+                        });
+                    }
+                } catch (error) {
+                    throw error;
+                }
+            };
 
-            Promise.all(insertPromises)
+            insertSequentially()
                 .then(() => {
                     db.close((err) => {
                         if (err) {
