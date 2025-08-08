@@ -94,3 +94,8 @@ Thumbs.db
 data/*.sqlite
 data/*.sqlite3
 data/*.db
+
+# Test files
+test-database.sqlite
+test-database.sqlite3
+test-database.db

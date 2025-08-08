@@ -57,20 +57,24 @@ doppler run node connection-test-doppler.js
 - Dopplerを使用することで、シークレットの安全な管理と環境別の設定管理が可能になります 
 
 
-neondb スキーマ、テーブル作成 例
+2. 外部ストレージに置いてランタイムでフェッチする
+static_data.json を S3 や Google Cloud Storage、CDN（Cloudflare R2 など）に置き、
 
-# 1) 接続
-psql 'postgresql://neondb_owner:…'
+python
+コピーする
+編集する
+import requests
+data = requests.get("https://your-bucket.example.com/static_data.json").json()
+のように起動時・再読み込み時にフェッチすれば、アプリ再デプロイ不要でデータだけ差し替えられます。
 
-# 2) スキーマ作成
-neondb=> CREATE SCHEMA billing;
+メリット
 
-# 3) テーブル作成
-neondb=> CREATE TABLE billing.invoices (
-            id SERIAL PRIMARY KEY,
-            amount NUMERIC NOT NULL
-         );
+データ更新とアプリのリリースを分離できる
 
-# 4) 確認
-neondb=> \dn      -- スキーマ一覧
-neondb=> \dt billing.*  -- billing スキーマのテーブル一覧
+デプロイ不要で更新可能
+
+デメリット
+
+外部ストレージ／認証の実装が必要
+
+ネットワーク呼び出しが増え、起動が若干遅くなる可能性
