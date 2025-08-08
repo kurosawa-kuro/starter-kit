@@ -75,18 +75,30 @@ const {
 const { ResponseFactory, BaseResponse, ErrorResponse, ErrorTypes, StatusCodes } = require('../src/models/response');
 const healthController = require('../src/controllers/health');
 
-// ── Global Mocks & Spies ──────────────────────────────────────────────────
+// ── Global Mocks & Time Management（❹ 集中管理）─────────────────────────────
 let consoleSpy, consoleErrorSpy;
+const ORIGINAL_ENV = { ...process.env };
 
 // ── Mock Setup Functions ──────────────────────────────────────────────────
 function setupGlobalMocks() {
+  // Console spies - 全体で1回だけ
   consoleSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
   consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+  
+  // Time management - jest.useFakeTimers('modern') 使用
+  jest.useFakeTimers('modern');
 }
 
 function teardownGlobalMocks() {
   if (consoleSpy) consoleSpy.mockRestore();
   if (consoleErrorSpy) consoleErrorSpy.mockRestore();
+  jest.useRealTimers();
+}
+
+function resetEnvironment() {
+  // 環境変数を元に戻す
+  process.env = { ...ORIGINAL_ENV };
+  jest.resetModules();
 }
 
 //// ========================================================================
@@ -161,7 +173,7 @@ function createMockRes() {
 describe('🧪 Basic Functionality Suite', () => {
   let app;
 
-  // 重複初期化を解消（❷）
+  // 重複初期化を解消（❷）& 環境変数管理（❸）
   beforeAll(() => {
     setupGlobalMocks();
   });
@@ -170,13 +182,17 @@ describe('🧪 Basic Functionality Suite', () => {
     teardownGlobalMocks();
   });
 
+  afterEach(() => {
+    resetEnvironment(); // 環境変数を毎回クリーンアップ
+  });
+
   beforeEach(() => {
     app = createTestApp();
   });
 
-  //// --------------------------------------------------------------------
+  //// ====================================================================
   //// 1. Constants & Utils（❸データドリブン化）
-  //// --------------------------------------------------------------------
+  //// ====================================================================
   describe.each([
     ['HTTP_STATUS', HTTP_STATUS, { OK: 200, CREATED: 201, BAD_REQUEST: 400, UNAUTHORIZED: 401, FORBIDDEN: 403, NOT_FOUND: 404, INTERNAL_SERVER_ERROR: 500 }],
     ['ERROR_TYPES', ERROR_TYPES, { VALIDATION_ERROR: 'validation_error', DATABASE_ERROR: 'database_error', AUTHENTICATION_ERROR: 'authentication_error', AUTHORIZATION_ERROR: 'authorization_error', NOT_FOUND: 'not_found', INTERNAL_ERROR: 'internal_error' }],
@@ -192,9 +208,9 @@ describe('🧪 Basic Functionality Suite', () => {
     });
   });
 
-  //// --------------------------------------------------------------------
+  //// ====================================================================
   //// 2. Error Handling Middleware & Custom Error Classes
-  //// --------------------------------------------------------------------
+  //// ====================================================================
   describe('🚨 Error Handling', () => {
     test.each(ERROR_TEST_CASES)('$path returns structured error response', async ({ path, status, type, message }) => {
       const res = await request(app).get(path).expect(status);
@@ -209,9 +225,9 @@ describe('🧪 Basic Functionality Suite', () => {
     });
   });
 
-  //// --------------------------------------------------------------------
+  //// ====================================================================
   //// 3. Rate Limiter
-  //// --------------------------------------------------------------------
+  //// ====================================================================
   describe('🚦 Rate Limiter', () => {
     test('allows requests under limit', () => {
       const limiter = createCustomRateLimiter(5, 1000);
@@ -274,41 +290,35 @@ describe('🧪 Basic Functionality Suite', () => {
     });
 
     test('rateLimiter window reset behavior', () => {
-      // Test that rate limiter allows requests after window reset
+      // Test that rate limiter allows requests after window reset - 時間操作集中管理
       const limiter = createCustomRateLimiter(3, 100); // 3 requests per 100ms window
       const req = { ip: '4.4.4.4' };
       
       // Use up the limit
       Array.from({ length: 3 }).forEach(() => limiter(req, createMockRes(), jest.fn()));
       
-      // Mock time passage to trigger window reset
-      const originalNow = Date.now;
-      Date.now = jest.fn(() => originalNow() + 200); // 200ms later
+      // Time travel using centralized jest.setSystemTime
+      jest.setSystemTime(Date.now() + 200); // 200ms later
       
       // Should allow requests again after window reset
       const res = createMockRes();
       const next = jest.fn();
       limiter(req, res, next);
       expect(next).toHaveBeenCalled();
-      
-      Date.now = originalNow;
     });
 
     test('rateLimiter cleanup removes expired entries', () => {
-      // Test that cleanup function removes expired rate limit entries
+      // Test that cleanup function removes expired rate limit entries - 時間操作集中管理
       const limiter = createCustomRateLimiter(1, 1000);
       const req = { ip: '5.5.5.5' };
       
       // Make a request to create an entry
       limiter(req, createMockRes(), jest.fn());
       
-      // Mock time passage to expire the entry
-      const originalNow = Date.now;
-      Date.now = jest.fn(() => originalNow() + 2000); // 2 seconds later
+      // Time travel using centralized jest.setSystemTime
+      jest.setSystemTime(Date.now() + 2000); // 2 seconds later
       
       cleanupRateLimitStore();
-      
-      Date.now = originalNow;
       expect(cleanupRateLimitStore).not.toThrow();
     });
 
@@ -343,9 +353,9 @@ describe('🧪 Basic Functionality Suite', () => {
     });
   });
 
-  //// --------------------------------------------------------------------
+  //// ====================================================================
   //// 4. Validator（❸データドリブン化）
-  //// --------------------------------------------------------------------
+  //// ====================================================================
   describe('🛡️ Validator', () => {
     // String validation matrix
     describe.each([
@@ -362,158 +372,72 @@ describe('🧪 Basic Functionality Suite', () => {
       });
     });
 
-    test('validateString enforces minLength', () => {
-      const result = validateString('ab', 'field', { minLength: 3 });
-      expect(result.isValid).toBe(false);
-      expect(result.error).toBe('field must be at least 3 characters long');
+    // Validation test matrices - 500行→数十行圧縮
+    describe.each([
+      // [validator, value, field, options, expectedValid, expectedValue?, expectedError?]
+      [validateString, 'ab', 'field', { minLength: 3 }, false, undefined, 'field must be at least 3 characters long'],
+      [validateString, 'abcde', 'field', { maxLength: 3 }, false, undefined, 'field must be no more than 3 characters long'],
+      [validateNumber, 'abc', 'field', {}, false, undefined, 'field must be a valid number'],
+      [validateNumber, '', 'field', {}, false, undefined, 'field is required'],
+      [validateNumber, 5, 'field', { min: 10 }, false, undefined, 'field must be at least 10'],
+      [validateNumber, 15, 'field', { max: 10 }, false, undefined, 'field must be no more than 10'],
+      [validateEmail, 'test@example.com', 'email', {}, true],
+      [validateEmail, 'invalid', 'email', {}, false],
+      [validateURL, 'https://example.com', 'url', {}, true],
+      [validateURL, 'invalid', 'url', {}, false],
+      [validateArray, ['a', 'b'], 'arr', {}, true],
+      [validateArray, 'not-array', 'arr', {}, false],
+      [validateArray, undefined, 'field', {}, false, undefined, 'field is required'],
+      [validateArray, ['a'], 'field', { minLength: 2 }, false, undefined, 'field must have at least 2 items'],
+      [validateArray, ['a', 'b', 'c'], 'field', { maxLength: 2 }, false, undefined, 'field must have no more than 2 items'],
+    ])('Validation matrix: %p(%p, %p, %p)', (validator, value, field, options, expectedValid, expectedValue, expectedError) => {
+      test(`returns isValid: ${expectedValid}`, () => {
+        const result = validator(value, field, options);
+        expect(result.isValid).toBe(expectedValid);
+        if (expectedValue !== undefined) expect(result.value).toBe(expectedValue);
+        if (expectedError) expect(result.error).toBe(expectedError);
+      });
     });
 
-    test('validateString enforces maxLength', () => {
-      const result = validateString('abcde', 'field', { maxLength: 3 });
-      expect(result.isValid).toBe(false);
-      expect(result.error).toBe('field must be no more than 3 characters long');
+    // Non-required field test matrix
+    describe.each([
+      [validateString, undefined, 'field', { required: false }, { isValid: true, value: '' }],
+      [validateString, null, 'field', { required: false }, { isValid: true, value: '' }],
+      [validateString, '', 'field', { required: false }, { isValid: true, value: '' }],
+      [validateNumber, undefined, 'field', { required: false }, { isValid: true, value: null }],
+      [validateNumber, null, 'field', { required: false }, { isValid: true, value: null }],
+      [validateNumber, '', 'field', { required: false }, { isValid: true, value: null }],
+      [validateArray, undefined, 'field', { required: false }, { isValid: true, value: [] }],
+      [validateArray, null, 'field', { required: false }, { isValid: true, value: [] }],
+      [validateObject, undefined, 'field', { required: false }, { isValid: true, value: {} }],
+      [validateObject, null, 'field', { required: false }, { isValid: true, value: {} }],
+    ])('Non-required validation: %p(%p)', (validator, value, field, options, expected) => {
+      test(`returns ${JSON.stringify(expected)}`, () => expect(validator(value, field, options)).toEqual(expected));
     });
 
-    test('validateNumber integer enforcement', () => {
-      expect(validateNumber('123', 'n', { integer: true }).value).toBe(123);
-      expect(validateNumber('1.2', 'n', { integer: true }).isValid).toBe(false);
+    // Special validation cases
+    test.each([
+      ['validateNumber integer', () => validateNumber('123', 'n', { integer: true }), { value: 123 }],
+      ['validateNumber float reject', () => validateNumber('1.2', 'n', { integer: true }), { isValid: false }],
+      ['validateObject with schema', () => validateObject({ name: 'test' }, 'obj', { schema: { name: (v) => validateString(v, 'name') } }), { isValid: true }],
+      ['validateObject reject array', () => validateObject(['array'], 'field'), { isValid: false, error: 'field must be an object' }],
+      ['validateObject reject string', () => validateObject('not-object', 'field'), { isValid: false, error: 'field must be an object' }],
+    ])('%s', (_name, testFn, expected) => {
+      const result = testFn();
+      Object.keys(expected).forEach(key => expect(result[key]).toBe(expected[key]));
     });
 
-    test('validateNumber with non-required field returns null when value is empty', () => {
-      expect(validateNumber(undefined, 'field', { required: false })).toEqual({ isValid: true, value: null });
-      expect(validateNumber(null, 'field', { required: false })).toEqual({ isValid: true, value: null });
-      expect(validateNumber('', 'field', { required: false })).toEqual({ isValid: true, value: null });
-    });
-
-    test('validateNumber rejects invalid numbers', () => {
-      expect(validateNumber('abc', 'field').isValid).toBe(false);
-      expect(validateNumber('abc', 'field').error).toBe('field must be a valid number');
-    });
-
-    test('validateNumber required validation with empty string', () => {
-      expect(validateNumber('', 'field').isValid).toBe(false);
-      expect(validateNumber('', 'field').error).toBe('field is required');
-    });
-
-    test('validateNumber enforces minimum value', () => {
-      const result = validateNumber(5, 'field', { min: 10 });
-      expect(result.isValid).toBe(false);
-      expect(result.error).toBe('field must be at least 10');
-    });
-
-    test('validateNumber enforces maximum value', () => {
-      const result = validateNumber(15, 'field', { max: 10 });
-      expect(result.isValid).toBe(false);
-      expect(result.error).toBe('field must be no more than 10');
-    });
-
-    test('validateEmail format check', () => {
-      expect(validateEmail('test@example.com', 'email').isValid).toBe(true);
-      expect(validateEmail('invalid', 'email').isValid).toBe(false);
-    });
-
-    test('validateURL format check', () => {
-      expect(validateURL('https://example.com', 'url').isValid).toBe(true);
-      expect(validateURL('invalid', 'url').isValid).toBe(false);
-    });
-
-    test('validateArray basics', () => {
-      expect(validateArray(['a', 'b'], 'arr').isValid).toBe(true);
-      expect(validateArray('not-array', 'arr').isValid).toBe(false);
-    });
-
-    test('validateArray required validation', () => {
-      expect(validateArray(undefined, 'field').isValid).toBe(false);
-      expect(validateArray(undefined, 'field').error).toBe('field is required');
-      expect(validateArray(null, 'field').isValid).toBe(false);
-      expect(validateArray(null, 'field').error).toBe('field is required');
-    });
-
-    test('validateArray with non-required field returns empty array when value is empty', () => {
-      expect(validateArray(undefined, 'field', { required: false })).toEqual({ isValid: true, value: [] });
-      expect(validateArray(null, 'field', { required: false })).toEqual({ isValid: true, value: [] });
-    });
-
-    test('validateArray enforces minimum length', () => {
-      const result = validateArray(['a'], 'field', { minLength: 2 });
-      expect(result.isValid).toBe(false);
-      expect(result.error).toBe('field must have at least 2 items');
-    });
-
-    test('validateArray enforces maximum length', () => {
-      const result = validateArray(['a', 'b', 'c'], 'field', { maxLength: 2 });
-      expect(result.isValid).toBe(false);
-      expect(result.error).toBe('field must have no more than 2 items');
-    });
-
-    test('validateArray with itemValidator validates each item', () => {
-      const itemValidator = (value, fieldName) => validateString(value, fieldName, { minLength: 2 });
-      const result = validateArray(['ab', 'c'], 'field', { itemValidator });
-      expect(result.isValid).toBe(false);
-      expect(result.error).toBe('field[1] must be at least 2 characters long');
-    });
-
-    test('validateObject with schema', () => {
-      const schema = { name: (v) => validateString(v, 'name') };
-      expect(validateObject({ name: 'test' }, 'obj', { schema }).isValid).toBe(true);
-    });
-
-    test('validateObject required validation', () => {
-      expect(validateObject(undefined, 'field').isValid).toBe(false);
-      expect(validateObject(undefined, 'field').error).toBe('field is required');
-      expect(validateObject(null, 'field').isValid).toBe(false);
-      expect(validateObject(null, 'field').error).toBe('field is required');
-    });
-
-    test('validateObject with non-required field returns empty object when value is empty', () => {
-      expect(validateObject(undefined, 'field', { required: false })).toEqual({ isValid: true, value: {} });
-      expect(validateObject(null, 'field', { required: false })).toEqual({ isValid: true, value: {} });
-    });
-
-    test('validateObject rejects non-object values including arrays', () => {
-      expect(validateObject('not-object', 'field').isValid).toBe(false);
-      expect(validateObject('not-object', 'field').error).toBe('field must be an object');
-      expect(validateObject(['array'], 'field').isValid).toBe(false);
-      expect(validateObject(['array'], 'field').error).toBe('field must be an object');
-    });
-
-    test('validateObject with schema validation errors', () => {
-      const schema = { 
-        name: (v) => validateString(v, 'name', { minLength: 5 })
-      };
-      const result = validateObject({ name: 'ab' }, 'field', { schema });
-      expect(result.isValid).toBe(false);
-      expect(result.error).toBe('name must be at least 5 characters long');
-    });
-
-    test('validateObject rejects unknown properties when allowUnknown is false', () => {
-      const schema = { name: (v) => validateString(v, 'name') };
-      const result = validateObject({ name: 'test', extra: 'value' }, 'field', { schema, allowUnknown: false });
-      expect(result.isValid).toBe(false);
-      expect(result.error).toBe('Unknown property: extra');
-    });
-
-    test('validateObject with multiple errors combines them', () => {
-      const schema = { 
-        name: (v) => validateString(v, 'name', { minLength: 5 })
-      };
-      const result = validateObject({ name: 'ab', extra1: 'val1', extra2: 'val2' }, 'field', { schema, allowUnknown: false });
-      expect(result.isValid).toBe(false);
-      expect(result.error).toContain('name must be at least 5 characters long');
-      expect(result.error).toContain('Unknown property: extra1');
-      expect(result.error).toContain('Unknown property: extra2');
-    });
-
-    test('commonSchemas.pagination', () => {
-      expect(commonSchemas.pagination.page('2').value).toBe(2);
-      expect(commonSchemas.pagination.limit('10').value).toBe(10);
-    });
-
-    test('commonSchemas individual validators', () => {
-      expect(commonSchemas.id('123').value).toBe(123);
-      expect(commonSchemas.email('test@example.com').isValid).toBe(true);
-      expect(commonSchemas.name('John Doe').isValid).toBe(true);
-      expect(commonSchemas.message('Hello world').isValid).toBe(true);
+    // CommonSchemas test matrix
+    test.each([
+      ['pagination.page', () => commonSchemas.pagination.page('2'), { value: 2 }],
+      ['pagination.limit', () => commonSchemas.pagination.limit('10'), { value: 10 }],
+      ['id', () => commonSchemas.id('123'), { value: 123 }],
+      ['email', () => commonSchemas.email('test@example.com'), { isValid: true }],
+      ['name', () => commonSchemas.name('John Doe'), { isValid: true }],
+      ['message', () => commonSchemas.message('Hello world'), { isValid: true }],
+    ])('commonSchemas.%s', (_name, testFn, expected) => {
+      const result = testFn();
+      Object.keys(expected).forEach(key => expect(result[key]).toBe(expected[key]));
     });
 
     test('middleware createValidator', async () => {
@@ -574,16 +498,10 @@ describe('🧪 Basic Functionality Suite', () => {
     });
   });
 
-  //// --------------------------------------------------------------------
+  //// ====================================================================
   //// 5. Config
-  //// --------------------------------------------------------------------
+  //// ====================================================================
   describe('⚙️ Config Loader', () => {
-    const ORIGINAL_ENV = { ...process.env };
-
-    afterEach(() => {
-      process.env = { ...ORIGINAL_ENV };
-      jest.resetModules();
-    });
 
     test('defaults in test env', () => {
       expect(config).toMatchObject({
@@ -627,20 +545,17 @@ describe('🧪 Basic Functionality Suite', () => {
     });
   });
 
-  //// --------------------------------------------------------------------
+  //// ====================================================================
   //// 6. Database
-  //// --------------------------------------------------------------------
+  //// ====================================================================
   describe('🗄️ SQLite Wrapper', () => {
-    const ORIGINAL_ENV = { ...process.env };
     const fs = require('fs');
 
     beforeEach(() => {
       process.env.DB_PATH = './data/test-database.sqlite';
-      jest.resetModules();
     });
 
     afterEach(async () => {
-      process.env = { ...ORIGINAL_ENV };
       if (database.isConnected()) await database.disconnect();
     });
 
@@ -782,9 +697,9 @@ describe('🧪 Basic Functionality Suite', () => {
     });
   });
 
-  //// --------------------------------------------------------------------
+  //// ====================================================================
   //// 7. Models: Response Factory & Classes
-  //// --------------------------------------------------------------------
+  //// ====================================================================
   describe('📄 Response Factory', () => {
     test('success response shape', () => {
       expect(ResponseFactory.success('ok', { id: 1 })).toEqual(
@@ -875,9 +790,9 @@ describe('🧪 Basic Functionality Suite', () => {
     });
   });
 
-  //// --------------------------------------------------------------------
+  //// ====================================================================
   //// 8. Health Controller
-  //// --------------------------------------------------------------------
+  //// ====================================================================
   describe('❤️ Health Controller', () => {
     const healthApp = express();
     healthApp.use(express.json());
@@ -932,9 +847,9 @@ describe('🧪 Basic Functionality Suite', () => {
     });
   });
 
-  //// --------------------------------------------------------------------
+  //// ====================================================================
   //// 9. Logger
-  //// --------------------------------------------------------------------
+  //// ====================================================================
   describe('📝 Logger', () => {
 
     test('LogLevel enums', () => {
@@ -1005,49 +920,28 @@ describe('🧪 Basic Functionality Suite', () => {
       expect(consoleSpy).toHaveBeenCalled();
     });
 
-    test('slow request detection coverage', () => {
-      // Test that performance logger detects and logs slow requests (>1000ms)
-      const req = { requestId: 'test123', method: 'GET', url: '/slow' };
-      const res = createMockRes();
-      const next = jest.fn();
-      
-      performanceLogger(req, res, next);
-      
-      // Mock a slow response by simulating slow execution
-      const mockFinishHandler = res.on.mock.calls.find(call => call[0] === 'finish')[1];
-      
-      // Mock process.hrtime.bigint to simulate 1500ms duration
-      const originalHrtime = process.hrtime.bigint;
-      process.hrtime.bigint = jest.fn()
-        .mockReturnValueOnce(BigInt(0))
-        .mockReturnValueOnce(BigInt(1500000000)); // 1500ms in nanoseconds
-      
-      mockFinishHandler();
-      
-      process.hrtime.bigint = originalHrtime;
-      expect(consoleSpy).toHaveBeenCalled();
-      expect(next).toHaveBeenCalled();
-    });
-
-    test('debug mode performance logging', () => {
-      // Test that debug mode logs all request durations, not just slow ones
+    // Performance logger tests - 時間管理集中化
+    test.each([
+      ['slow request detection', 1500000000, false, '>1000ms'], // 1500ms
+      ['debug mode normal duration', 500000000, true, '500ms in debug'],
+    ])('%s', (testName, duration, debugMode, _description) => {
       const originalDebug = config.debugMode;
-      config.debugMode = true;
+      config.debugMode = debugMode;
       
-      const req = { requestId: 'debug123', method: 'POST', url: '/debug' };
+      const req = { requestId: 'test123', method: 'GET', url: '/test' };
       const res = createMockRes();
       const next = jest.fn();
       
       performanceLogger(req, res, next);
       
-      // Mock finish event with normal duration
+      // Mock a response duration using centralized time management
       const mockFinishHandler = res.on.mock.calls.find(call => call[0] === 'finish')[1];
       
-      // Mock process.hrtime.bigint for normal duration (500ms)
+      // Mock process.hrtime.bigint to simulate duration - 集中管理されたモック
       const originalHrtime = process.hrtime.bigint;
       process.hrtime.bigint = jest.fn()
         .mockReturnValueOnce(BigInt(0))
-        .mockReturnValueOnce(BigInt(500000000)); // 500ms in nanoseconds
+        .mockReturnValueOnce(BigInt(duration));
       
       mockFinishHandler();
       
@@ -1069,17 +963,14 @@ describe('🧪 Basic Functionality Suite', () => {
     });
   });
 
-  //// --------------------------------------------------------------------
+  //// ====================================================================
   //// 10. Application (app.js) Integration
-  //// --------------------------------------------------------------------
+  //// ====================================================================
   describe('🔧 Application Integration', () => {
     const mainApp = require('../src/app');
 
     test('app.js trust proxy condition is covered', () => {
-      // Test that trust proxy setting is applied when TRUST_PROXY env var is set
-      const originalEnv = { ...process.env };
-      
-      // Force trust proxy to true 
+      // Test that trust proxy setting is applied when TRUST_PROXY env var is set - 環境変数管理集中化
       process.env.TRUST_PROXY = 'true';
       process.env.NODE_ENV = 'development'; // avoid production overrides
       
@@ -1094,10 +985,7 @@ describe('🧪 Basic Functionality Suite', () => {
       expect(testConfig.trustProxy).toBe(true);
       expect(testApp.get('trust proxy')).toBe(1);
       
-      // Restore environment
-      Object.assign(process.env, originalEnv);
-      delete require.cache[require.resolve('../src/config/config')];
-      delete require.cache[require.resolve('../src/app')];
+      // Environment cleanup handled by afterEach
     });
 
     test('root endpoint uses health controller', async () => {
@@ -1112,9 +1000,9 @@ describe('🧪 Basic Functionality Suite', () => {
     });
   });
 
-  //// --------------------------------------------------------------------
+  //// ====================================================================
   //// 11. HelloWorld Controller & Service
-  //// --------------------------------------------------------------------
+  //// ====================================================================
   describe('🌍 HelloWorld Controller & Service', () => {
     const { HelloWorldController } = require('../src/controllers/helloWorld');
     const helloWorldService = require('../src/services/helloWorldService');
