@@ -76,6 +76,32 @@ const {
 const config = require('../src/config/config');
 const database = require('../src/config/database');
 
+//// ========================================================================
+////  Test Helper Constants & Functions
+//// ========================================================================
+
+// ── Test Data Constants ──────────────────────────────────────────────────
+const ERROR_TEST_CASES = [
+  { path: '/error', status: 400, type: 'validation_error', message: 'Test validation error' },
+  { path: '/database-error', status: 500, type: 'database_error', message: 'Test database error' },
+  { path: '/auth-error', status: 401, type: 'authentication_error', message: 'Test authentication error' },
+  { path: '/forbidden', status: 403, type: 'authorization_error', message: 'Test authorization error' },
+  { path: '/not-found-error', status: 404, type: 'not_found', message: 'Test not found error' },
+  { path: '/internal-error', status: 500, type: 'internal_error', message: 'Test internal error' },
+  { path: '/non-existent', status: 404, type: 'not_found', message: 'Route /non-existent not found' },
+];
+
+const ERROR_CONSTRUCTOR_MATRIX = [
+  [AppError, 'internal_error', 500],
+  [ValidationError, 'validation_error', 400],
+  [DatabaseError, 'database_error', 500],
+  [AuthenticationError, 'authentication_error', 401],
+  [AuthorizationError, 'authorization_error', 403],
+  [NotFoundError, 'not_found', 404],
+];
+
+// ── Test Helper Functions ─────────────────────────────────────────────────
+
 /**
  * Create a new Express app instance with basic routes for each test run.
  */
@@ -172,33 +198,14 @@ describe('🧪 Basic Functionality Suite', () => {
   //// 2. Error Handling Middleware & Custom Error Classes
   //// --------------------------------------------------------------------
   describe('🚨 Error Handling', () => {
-    const errorCases = [
-      { path: '/error', status: 400, type: 'validation_error', message: 'Test validation error' },
-      { path: '/database-error', status: 500, type: 'database_error', message: 'Test database error' },
-      { path: '/auth-error', status: 401, type: 'authentication_error', message: 'Test authentication error' },
-      { path: '/forbidden', status: 403, type: 'authorization_error', message: 'Test authorization error' },
-      { path: '/not-found-error', status: 404, type: 'not_found', message: 'Test not found error' },
-      { path: '/internal-error', status: 500, type: 'internal_error', message: 'Test internal error' },
-      { path: '/non-existent', status: 404, type: 'not_found', message: 'Route /non-existent not found' },
-    ];
-
-    test.each(errorCases)('$path returns structured error response', async ({ path, status, type, message }) => {
+    test.each(ERROR_TEST_CASES)('$path returns structured error response', async ({ path, status, type, message }) => {
       const res = await request(app).get(path).expect(status);
       expect(res.body).toEqual(expect.objectContaining({ status: 'error', message }));
       if (type) expect(res.body.error).toBe(type);
     });
 
     describe('Custom Error Class constructors', () => {
-      const ctorMatrix = [
-        [AppError, 'internal_error', 500],
-        [ValidationError, 'validation_error', 400],
-        [DatabaseError, 'database_error', 500],
-        [AuthenticationError, 'authentication_error', 401],
-        [AuthorizationError, 'authorization_error', 403],
-        [NotFoundError, 'not_found', 404],
-      ];
-
-      test.each(ctorMatrix)('%p constructs properly', (Ctor, type, status) => {
+      test.each(ERROR_CONSTRUCTOR_MATRIX)('%p constructs properly', (Ctor, type, status) => {
         const err = new Ctor('msg');
         expect(err).toMatchObject({ message: 'msg', type, status });
         expect(err.name).toBe(Ctor.name);
@@ -271,6 +278,7 @@ describe('🧪 Basic Functionality Suite', () => {
     });
 
     test('rateLimiter window reset behavior', () => {
+      // Test that rate limiter allows requests after window reset
       const limiter = createCustomRateLimiter(3, 100); // 3 requests per 100ms window
       const req = { ip: '4.4.4.4' };
       
@@ -291,6 +299,7 @@ describe('🧪 Basic Functionality Suite', () => {
     });
 
     test('rateLimiter cleanup removes expired entries', () => {
+      // Test that cleanup function removes expired rate limit entries
       const limiter = createCustomRateLimiter(1, 1000);
       const req = { ip: '5.5.5.5' };
       
@@ -318,6 +327,7 @@ describe('🧪 Basic Functionality Suite', () => {
     });
 
     test('rateLimiter interval setup in non-test environment', () => {
+      // Verify that cleanup interval is set up in production environment
       const originalEnv = process.env.NODE_ENV;
       const originalSetInterval = global.setInterval;
       const mockSetInterval = jest.fn();
@@ -905,10 +915,10 @@ describe('🧪 Basic Functionality Suite', () => {
     });
 
     test('GET /app-info error handling', async () => {
-      // Create a new express app for this test with a custom error route
+      // Test error handling in app info endpoint by forcing an error
       const errorTestApp = express();
       errorTestApp.use(express.json());
-      errorTestApp.get('/app-info', async (req, res) => {
+      errorTestApp.get('/app-info', async (_req, res) => {
         try {
           // Force an error by accessing a non-existent property
           const badData = null;
@@ -933,7 +943,9 @@ describe('🧪 Basic Functionality Suite', () => {
   describe('📝 Logger', () => {
     const consoleSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
 
-    afterAll(() => consoleSpy.mockRestore());
+    afterAll(() => {
+      consoleSpy.mockRestore();
+    });
 
     test('LogLevel enums', () => {
       expect(LogLevel.ERROR).toBe(0);
@@ -1004,6 +1016,7 @@ describe('🧪 Basic Functionality Suite', () => {
     });
 
     test('slow request detection coverage', () => {
+      // Test that performance logger detects and logs slow requests (>1000ms)
       const req = { requestId: 'test123', method: 'GET', url: '/slow' };
       const res = createMockRes();
       const next = jest.fn();
@@ -1027,6 +1040,7 @@ describe('🧪 Basic Functionality Suite', () => {
     });
 
     test('debug mode performance logging', () => {
+      // Test that debug mode logs all request durations, not just slow ones
       const originalDebug = config.debugMode;
       config.debugMode = true;
       
@@ -1054,6 +1068,7 @@ describe('🧪 Basic Functionality Suite', () => {
     });
 
     test('debug mode database logging', () => {
+      // Test that debug mode enables detailed database query logging
       const originalDebug = config.debugMode;
       config.debugMode = true;
       
@@ -1071,7 +1086,7 @@ describe('🧪 Basic Functionality Suite', () => {
     const mainApp = require('../src/app');
 
     test('app.js trust proxy condition is covered', () => {
-      // Directly test the trust proxy setting to cover line 34
+      // Test that trust proxy setting is applied when TRUST_PROXY env var is set
       const originalEnv = { ...process.env };
       
       // Force trust proxy to true 
@@ -1116,7 +1131,9 @@ describe('🧪 Basic Functionality Suite', () => {
     
     const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
     
-    afterAll(() => consoleErrorSpy.mockRestore());
+    afterAll(() => {
+      consoleErrorSpy.mockRestore();
+    });
     
     describe('Controller Error Handling', () => {
       test('getHelloWorld handles service errors', async () => {
@@ -1181,13 +1198,15 @@ describe('🧪 Basic Functionality Suite', () => {
     });
     
     describe('Service Mock Data Fallback', () => {
+      // Test that services gracefully fall back to mock data when database is unavailable
       beforeEach(() => {
-        // Mock database as disconnected
         jest.spyOn(database, 'isConnected').mockReturnValue(false);
       });
       
       afterEach(() => {
-        database.isConnected.mockRestore();
+        if (database.isConnected.mockRestore) {
+          database.isConnected.mockRestore();
+        }
       });
       
       test('getHelloWorldMessage uses mock when DB disconnected', async () => {
@@ -1219,17 +1238,23 @@ describe('🧪 Basic Functionality Suite', () => {
     });
     
     describe('Service Error Handling with Mock Fallback', () => {
+      // Test that services fall back to mock data when database queries fail
       beforeEach(() => {
-        // Mock database as connected but queries fail
         jest.spyOn(database, 'isConnected').mockReturnValue(true);
-        // Reset mock data to ensure clean state
         require('../src/utils/mock').resetMockData();
       });
       
       afterEach(() => {
-        database.isConnected.mockRestore();
-        if (database.query.mockRestore) database.query.mockRestore();
-        if (database.run.mockRestore) database.run.mockRestore();
+        // Clean up all database mocks
+        if (database.isConnected.mockRestore) {
+          database.isConnected.mockRestore();
+        }
+        if (database.query.mockRestore) {
+          database.query.mockRestore();
+        }
+        if (database.run.mockRestore) {
+          database.run.mockRestore();
+        }
       });
       
       test('getHelloWorldMessage falls back to mock on database error', async () => {
@@ -1270,7 +1295,9 @@ describe('🧪 Basic Functionality Suite', () => {
         await helloWorldService.initializeDatabase();
         
         expect(database.isConnected).toHaveBeenCalled();
-        database.isConnected.mockRestore();
+        if (database.isConnected.mockRestore) {
+          database.isConnected.mockRestore();
+        }
       });
       
       test('initializeDatabase when DB not connected', async () => {
@@ -1279,7 +1306,9 @@ describe('🧪 Basic Functionality Suite', () => {
         await helloWorldService.initializeDatabase();
         
         expect(database.isConnected).toHaveBeenCalled();
-        database.isConnected.mockRestore();
+        if (database.isConnected.mockRestore) {
+          database.isConnected.mockRestore();
+        }
       });
       
       test('initializeDatabase handles errors', async () => {
@@ -1290,7 +1319,9 @@ describe('🧪 Basic Functionality Suite', () => {
         await helloWorldService.initializeDatabase();
         
         expect(database.isConnected).toHaveBeenCalled();
-        database.isConnected.mockRestore();
+        if (database.isConnected.mockRestore) {
+          database.isConnected.mockRestore();
+        }
       });
     });
   });
