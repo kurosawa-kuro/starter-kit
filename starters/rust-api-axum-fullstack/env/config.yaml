@@ -1,0 +1,29 @@
+# ===========================================
+# プロジェクト固有設定
+# 環境変数で個別にオーバーライド可能
+# クレデンシャルは Doppler で管理 (doppler.yaml)
+# ===========================================
+
+# --- アプリケーション ---
+projectName: starter
+appEnv: local
+port: 8080
+logLevel: info
+
+# --- データベース (SQLite) ---
+db:
+  path: data/db.sqlite3
+  # テスト用は :memory: を使用 (テストコード側で指定)
+
+# --- 静的ファイル配信 ---
+static:
+  dir: client/dist
+
+# --- サーバー ---
+server:
+  timeout: 60
+  corsAllowAll: true
+
+# --- 機能フラグ ---
+# authEnabled: false
+# rateLimitPerMinute: 1000

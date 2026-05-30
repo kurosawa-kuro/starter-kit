@@ -1,0 +1,37 @@
+services:
+  # テスト用PostgreSQL
+  db-test:
+    image: postgres:15
+    container_name: hello_pg_test
+    environment:
+      POSTGRES_USER: sampleuser
+      POSTGRES_PASSWORD: samplepass
+      POSTGRES_DB: sampledb_test
+    ports:
+      - "15434:5432"  # テスト用ポート（15434）
+    volumes:
+      - pgdata_test:/var/lib/postgresql/data
+      - ../db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sampleuser -d sampledb_test"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # テスト用pgAdmin（オプション）
+  pgadmin-test:
+    image: dpage/pgadmin4
+    container_name: hello_pgadmin_test
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: adminpass
+    ports:
+      - "5051:80"  # テスト用ポート（5051）
+    depends_on:
+      db-test:
+        condition: service_healthy
+    profiles:
+      - test-admin
+
+volumes:
+  pgdata_test: 

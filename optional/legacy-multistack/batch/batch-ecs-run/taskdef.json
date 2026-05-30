@@ -1,0 +1,24 @@
+{
+  "family": "hello-run-task",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "256",
+  "memory": "512",
+  "executionRoleArn": "arn:aws:iam::889082311746:role/ecsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::889082311746:role/ecsTaskExecutionRole",
+  "containerDefinitions": [
+    {
+      "name": "hello",
+      "image": "889082311746.dkr.ecr.ap-northeast-1.amazonaws.com/hello-ecs:latest",
+      "essential": true,
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/hello-run",
+          "awslogs-region": "ap-northeast-1",
+          "awslogs-stream-prefix": "hello"
+        }
+      }
+    }
+  ]
+}

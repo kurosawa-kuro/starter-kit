@@ -1,0 +1,51 @@
+### Spring Boot Hello World API (Kotlin) - HTTP Tests
+### 変数定義
+@baseUrl = http://localhost:8080
+@contentType = application/json
+
+### 1. 基本的なHello Worldメッセージ
+GET {{baseUrl}}/api/v1/hello
+Content-Type: {{contentType}}
+
+### 2. パーソナライズされたHelloメッセージ
+GET {{baseUrl}}/api/v1/hello/John
+Content-Type: {{contentType}}
+
+### 3. カスタムHelloメッセージの作成
+POST {{baseUrl}}/api/v1/hello
+Content-Type: {{contentType}}
+
+{
+  "name": "Alice",
+  "message": "Welcome to our Kotlin API!"
+}
+
+### 4. ヘルスチェック
+GET {{baseUrl}}/api/v1/hello/health
+Content-Type: {{contentType}}
+
+### 5. Actuator ヘルスチェック
+GET {{baseUrl}}/actuator/health
+Content-Type: {{contentType}}
+
+### 6. Actuator 情報
+GET {{baseUrl}}/actuator/info
+Content-Type: {{contentType}}
+
+### 7. バリデーションテスト（無効なリクエスト）
+POST {{baseUrl}}/api/v1/hello
+Content-Type: {{contentType}}
+
+{
+  "name": "",
+  "message": "This should fail validation"
+}
+
+### 8. 長い名前のテスト
+POST {{baseUrl}}/api/v1/hello
+Content-Type: {{contentType}}
+
+{
+  "name": "VeryLongNameThatExceedsTheMaximumLengthLimitForValidationTesting",
+  "message": "Test message"
+} 

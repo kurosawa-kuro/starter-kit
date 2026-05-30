@@ -1,0 +1,20 @@
+# Build artifacts
+dist/
+lambda.zip
+
+# Dependencies
+node_modules/
+
+# Environment
+.env
+.env.*
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+
+# Logs
+*.log

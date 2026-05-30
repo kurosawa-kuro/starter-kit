@@ -1,0 +1,56 @@
+### Go + Chi Hello World API - HTTP Tests
+### 変数定義
+@baseUrl = http://localhost:8080
+@contentType = application/json
+
+### 1. アプリケーション情報
+GET {{baseUrl}}/
+Content-Type: {{contentType}}
+
+### 2. 基本的なHello Worldメッセージ
+GET {{baseUrl}}/api/hello-world
+Content-Type: {{contentType}}
+
+### 3. パーソナライズされたHelloメッセージ（クエリパラメータはChiでは未実装）
+GET {{baseUrl}}/api/hello-world
+Content-Type: {{contentType}}
+
+### 4. Hello Worldメッセージの追加
+POST {{baseUrl}}/api/hello-world
+Content-Type: {{contentType}}
+
+{
+  "name": "Alice"
+}
+
+### 5. Hello Worldメッセージ一覧の取得
+GET {{baseUrl}}/api/hello-world/messages
+Content-Type: {{contentType}}
+
+### 6. 特定のHello Worldメッセージ取得（ID指定）
+GET {{baseUrl}}/api/hello-world/messages/1
+Content-Type: {{contentType}}
+
+### 7. ヘルスチェック
+GET {{baseUrl}}/api/health
+Content-Type: {{contentType}}
+
+### 8. Swagger UI
+GET {{baseUrl}}/swagger/index.html
+Content-Type: {{contentType}}
+
+### 9. バリデーションテスト（無効なリクエスト）
+POST {{baseUrl}}/api/hello-world
+Content-Type: {{contentType}}
+
+{
+  "name": ""
+}
+
+### 10. 長い名前のテスト
+POST {{baseUrl}}/api/hello-world
+Content-Type: {{contentType}}
+
+{
+  "name": "VeryLongNameThatExceedsTheMaximumLengthLimitForValidationTesting"
+} 

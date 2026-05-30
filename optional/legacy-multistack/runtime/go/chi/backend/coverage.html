@@ -1,0 +1,575 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>handler: Go Coverage Report</title>
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">backend/handler/health.go (0.0%)</option>
+				
+				<option value="file1">backend/handler/hello_world.go (5.7%)</option>
+				
+				<option value="file2">backend/models/hello_world.go (100.0%)</option>
+				
+				<option value="file3">backend/models/response.go (0.0%)</option>
+				
+				<option value="file4">backend/services/hello_world_service.go (5.7%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">not covered</span>
+				<span class="cov8">covered</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">package handler
+
+import (
+        "database/sql"
+        "net/http"
+        "time"
+
+        "backend/models"
+)
+
+// HealthHandler ヘルスチェックハンドラー構造体
+type HealthHandler struct {
+        db *sql.DB
+}
+
+// NewHealthHandler ヘルスチェックハンドラーを新規作成
+func NewHealthHandler(db *sql.DB) *HealthHandler <span class="cov0" title="0">{
+        return &amp;HealthHandler{db: db}
+}</span>
+
+// HealthCheckHandler ヘルスチェックエンドポイント
+// @Summary ヘルスチェック
+// @Description アプリケーションの状態を確認
+// @Tags health
+// @Accept json
+// @Produce json
+// @Success 200 {object} models.BaseResponse
+// @Router /api/health [get]
+func (h *HealthHandler) HealthCheckHandler(w http.ResponseWriter, r *http.Request) <span class="cov0" title="0">{
+        status := "healthy"
+        message := "Application is running"
+
+        // データベース接続チェック
+        if h.db != nil </span><span class="cov0" title="0">{
+                if err := h.db.Ping(); err != nil </span><span class="cov0" title="0">{
+                        status = "unhealthy"
+                        message = "Database connection failed"
+                }</span>
+        }
+
+        <span class="cov0" title="0">response := models.BaseResponse{
+                Status:    status,
+                Message:   message,
+                Timestamp: time.Now(),
+        }
+
+        models.SendJSONResponse(w, http.StatusOK, response)</span>
+}
+</pre>
+		
+		<pre class="file" id="file1" style="display: none">package handler
+
+import (
+        "database/sql"
+        "encoding/json"
+        "net/http"
+        "strconv"
+        "time"
+
+        "backend/models"
+        "backend/services"
+
+        "github.com/go-chi/chi/v5"
+)
+
+// HelloWorldHandler Hello Worldハンドラー構造体
+type HelloWorldHandler struct {
+        service *services.HelloWorldService
+}
+
+// NewHelloWorldHandler Hello Worldハンドラーを新規作成
+func NewHelloWorldHandler(db *sql.DB) *HelloWorldHandler <span class="cov0" title="0">{
+        return &amp;HelloWorldHandler{
+                service: services.NewHelloWorldService(db),
+        }
+}</span>
+
+// RootHandler ルートエンドポイント
+// @Summary ルートエンドポイント
+// @Description アプリケーション情報を取得
+// @Tags root
+// @Accept json
+// @Produce json
+// @Success 200 {object} models.BaseResponse
+// @Router / [get]
+func (h *HelloWorldHandler) RootHandler(w http.ResponseWriter, r *http.Request) <span class="cov0" title="0">{
+        response := models.BaseResponse{
+                Status:    "success",
+                Message:   "Go + Chi Starter Project API",
+                Timestamp: time.Now(),
+        }
+
+        models.SendJSONResponse(w, http.StatusOK, response)
+}</span>
+
+// GetHelloWorldHandler Hello Worldメッセージ取得
+// @Summary Hello World取得
+// @Description Hello Worldメッセージを取得
+// @Tags hello-world
+// @Accept json
+// @Produce json
+// @Success 200 {object} models.SuccessResponse{data=models.HelloWorldResponse}
+// @Router /api/hello-world [get]
+func (h *HelloWorldHandler) GetHelloWorldHandler(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
+        response := h.service.GetHelloWorld()
+        models.SendSuccessResponse(w, "Hello World message retrieved successfully", response)
+}</span>
+
+// CreateHelloWorldHandler Hello Worldメッセージ作成
+// @Summary Hello World作成
+// @Description Hello Worldメッセージを作成
+// @Tags hello-world
+// @Accept json
+// @Produce json
+// @Param request body models.HelloWorldRequest true "Hello World Request"
+// @Success 201 {object} models.SuccessResponse{data=models.HelloWorldMessage}
+// @Failure 400 {object} models.ErrorResponse
+// @Failure 500 {object} models.ErrorResponse
+// @Router /api/hello-world [post]
+func (h *HelloWorldHandler) CreateHelloWorldHandler(w http.ResponseWriter, r *http.Request) <span class="cov0" title="0">{
+        var request models.HelloWorldRequest
+
+        if err := json.NewDecoder(r.Body).Decode(&amp;request); err != nil </span><span class="cov0" title="0">{
+                models.SendValidationError(w, "Invalid request body")
+                return
+        }</span>
+
+        <span class="cov0" title="0">message, err := h.service.CreateHelloWorld(&amp;request)
+        if err != nil </span><span class="cov0" title="0">{
+                if _, ok := err.(*models.ValidationError); ok </span><span class="cov0" title="0">{
+                        models.SendValidationError(w, err.Error())
+                        return
+                }</span>
+                <span class="cov0" title="0">models.SendDatabaseError(w, "Failed to create hello world message")
+                return</span>
+        }
+
+        <span class="cov0" title="0">models.SendJSONResponse(w, http.StatusCreated, models.NewSuccessResponse("Hello World message created successfully", message))</span>
+}
+
+// GetHelloWorldMessagesHandler 全てのHello Worldメッセージ取得
+// @Summary Hello Worldメッセージ一覧取得
+// @Description 全てのHello Worldメッセージを取得
+// @Tags hello-world
+// @Accept json
+// @Produce json
+// @Success 200 {object} models.SuccessResponse{data=[]models.HelloWorldMessage}
+// @Failure 500 {object} models.ErrorResponse
+// @Router /api/hello-world/messages [get]
+func (h *HelloWorldHandler) GetHelloWorldMessagesHandler(w http.ResponseWriter, r *http.Request) <span class="cov0" title="0">{
+        messages, err := h.service.GetHelloWorldMessages()
+        if err != nil </span><span class="cov0" title="0">{
+                models.SendDatabaseError(w, "Failed to retrieve hello world messages")
+                return
+        }</span>
+
+        <span class="cov0" title="0">models.SendSuccessResponse(w, "Hello World messages retrieved successfully", messages)</span>
+}
+
+// GetHelloWorldMessageByIDHandler IDでHello Worldメッセージ取得
+// @Summary Hello Worldメッセージ取得（ID指定）
+// @Description 指定されたIDのHello Worldメッセージを取得
+// @Tags hello-world
+// @Accept json
+// @Produce json
+// @Param id path int true "Message ID"
+// @Success 200 {object} models.SuccessResponse{data=models.HelloWorldMessage}
+// @Failure 404 {object} models.ErrorResponse
+// @Failure 500 {object} models.ErrorResponse
+// @Router /api/hello-world/messages/{id} [get]
+func (h *HelloWorldHandler) GetHelloWorldMessageByIDHandler(w http.ResponseWriter, r *http.Request) <span class="cov0" title="0">{
+        idStr := chi.URLParam(r, "id")
+        id, err := strconv.Atoi(idStr)
+        if err != nil </span><span class="cov0" title="0">{
+                models.SendValidationError(w, "Invalid ID format")
+                return
+        }</span>
+
+        <span class="cov0" title="0">message, err := h.service.GetHelloWorldMessageByID(id)
+        if err != nil </span><span class="cov0" title="0">{
+                if err.Error() == "hello world message not found" </span><span class="cov0" title="0">{
+                        models.SendNotFoundError(w, "Hello World message not found")
+                        return
+                }</span>
+                <span class="cov0" title="0">models.SendDatabaseError(w, "Failed to retrieve hello world message")
+                return</span>
+        }
+
+        <span class="cov0" title="0">models.SendSuccessResponse(w, "Hello World message retrieved successfully", message)</span>
+}
+</pre>
+		
+		<pre class="file" id="file2" style="display: none">package models
+
+import (
+        "time"
+)
+
+// HelloWorldRequest Hello World作成リクエスト構造体
+type HelloWorldRequest struct {
+        Name string `json:"name"`
+}
+
+// HelloWorldMessage Hello Worldメッセージ構造体
+type HelloWorldMessage struct {
+        ID        int       `json:"id"`
+        Name      string    `json:"name"`
+        Message   string    `json:"message"`
+        CreatedAt time.Time `json:"created_at"`
+        UpdatedAt time.Time `json:"updated_at"`
+}
+
+// HelloWorldResponse Hello Worldレスポンス構造体
+type HelloWorldResponse struct {
+        Message   string    `json:"message"`
+        Timestamp time.Time `json:"timestamp"`
+        Version   string    `json:"version"`
+}
+
+// Validate Hello Worldリクエストのバリデーション
+func (h *HelloWorldRequest) Validate() error <span class="cov8" title="1">{
+        if h.Name == "" </span><span class="cov8" title="1">{
+                return &amp;ValidationError{Field: "name", Message: "Name is required"}
+        }</span>
+        <span class="cov8" title="1">return nil</span>
+}
+
+// ValidationError バリデーションエラー構造体
+type ValidationError struct {
+        Field   string `json:"field"`
+        Message string `json:"message"`
+}
+
+// Error エラーメッセージを返す
+func (v *ValidationError) Error() string <span class="cov8" title="1">{
+        return v.Message
+}</span>
+</pre>
+		
+		<pre class="file" id="file3" style="display: none">package models
+
+import (
+        "encoding/json"
+        "net/http"
+        "time"
+)
+
+// BaseResponse 基本レスポンス構造体
+type BaseResponse struct {
+        Status    string    `json:"status"`
+        Message   string    `json:"message"`
+        Timestamp time.Time `json:"timestamp"`
+}
+
+// SuccessResponse 成功レスポンス構造体
+type SuccessResponse struct {
+        BaseResponse
+        Data interface{} `json:"data,omitempty"`
+}
+
+// ErrorResponse エラーレスポンス構造体
+type ErrorResponse struct {
+        Status    string    `json:"status"`
+        Error     string    `json:"error"`
+        Message   string    `json:"message"`
+        Timestamp time.Time `json:"timestamp"`
+}
+
+// NewSuccessResponse 成功レスポンスを新規作成
+func NewSuccessResponse(message string, data interface{}) *SuccessResponse <span class="cov0" title="0">{
+        return &amp;SuccessResponse{
+                BaseResponse: BaseResponse{
+                        Status:    "success",
+                        Message:   message,
+                        Timestamp: time.Now(),
+                },
+                Data: data,
+        }
+}</span>
+
+// NewErrorResponse エラーレスポンスを新規作成
+func NewErrorResponse(errorType, message string) *ErrorResponse <span class="cov0" title="0">{
+        return &amp;ErrorResponse{
+                Status:    "error",
+                Error:     errorType,
+                Message:   message,
+                Timestamp: time.Now(),
+        }
+}</span>
+
+// SendJSONResponse JSONレスポンスを送信
+func SendJSONResponse(w http.ResponseWriter, statusCode int, data interface{}) <span class="cov0" title="0">{
+        w.Header().Set("Content-Type", "application/json")
+        w.WriteHeader(statusCode)
+
+        if err := json.NewEncoder(w).Encode(data); err != nil </span><span class="cov0" title="0">{
+                http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+        }</span>
+}
+
+// SendSuccessResponse 成功レスポンスを送信
+func SendSuccessResponse(w http.ResponseWriter, message string, data interface{}) <span class="cov0" title="0">{
+        response := NewSuccessResponse(message, data)
+        SendJSONResponse(w, http.StatusOK, response)
+}</span>
+
+// SendErrorResponse エラーレスポンスを送信
+func SendErrorResponse(w http.ResponseWriter, statusCode int, errorType, message string) <span class="cov0" title="0">{
+        response := NewErrorResponse(errorType, message)
+        SendJSONResponse(w, statusCode, response)
+}</span>
+
+// SendValidationError バリデーションエラーレスポンスを送信
+func SendValidationError(w http.ResponseWriter, message string) <span class="cov0" title="0">{
+        SendErrorResponse(w, http.StatusBadRequest, "validation_error", message)
+}</span>
+
+// SendNotFoundError リソース未発見エラーレスポンスを送信
+func SendNotFoundError(w http.ResponseWriter, message string) <span class="cov0" title="0">{
+        SendErrorResponse(w, http.StatusNotFound, "not_found", message)
+}</span>
+
+// SendInternalError 内部サーバーエラーレスポンスを送信
+func SendInternalError(w http.ResponseWriter, message string) <span class="cov0" title="0">{
+        SendErrorResponse(w, http.StatusInternalServerError, "internal_error", message)
+}</span>
+
+// SendDatabaseError データベースエラーレスポンスを送信
+func SendDatabaseError(w http.ResponseWriter, message string) <span class="cov0" title="0">{
+        SendErrorResponse(w, http.StatusInternalServerError, "database_error", message)
+}</span>
+</pre>
+		
+		<pre class="file" id="file4" style="display: none">package services
+
+import (
+        "database/sql"
+        "fmt"
+        "time"
+
+        "backend/models"
+)
+
+// HelloWorldService Hello Worldサービス構造体
+type HelloWorldService struct {
+        db *sql.DB
+}
+
+// NewHelloWorldService Hello Worldサービスを新規作成
+func NewHelloWorldService(db *sql.DB) *HelloWorldService <span class="cov8" title="1">{
+        return &amp;HelloWorldService{db: db}
+}</span>
+
+// GetHelloWorld Hello Worldメッセージを取得
+func (s *HelloWorldService) GetHelloWorld() *models.HelloWorldResponse <span class="cov8" title="1">{
+        return &amp;models.HelloWorldResponse{
+                Message:   "Hello, World!",
+                Timestamp: time.Now(),
+                Version:   "1.0.0",
+        }
+}</span>
+
+// CreateHelloWorld Hello Worldメッセージを作成
+func (s *HelloWorldService) CreateHelloWorld(request *models.HelloWorldRequest) (*models.HelloWorldMessage, error) <span class="cov0" title="0">{
+        // バリデーション
+        if err := request.Validate(); err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        // データベースに保存
+        <span class="cov0" title="0">query := `
+                INSERT INTO hello_world_messages (name, message, created_at, updated_at)
+                VALUES ($1, $2, $3, $4)
+                RETURNING id, name, message, created_at, updated_at
+        `
+
+        message := fmt.Sprintf("Hello, %s!", request.Name)
+        now := time.Now()
+
+        var result models.HelloWorldMessage
+        err := s.db.QueryRow(
+                query,
+                request.Name,
+                message,
+                now,
+                now,
+        ).Scan(
+                &amp;result.ID,
+                &amp;result.Name,
+                &amp;result.Message,
+                &amp;result.CreatedAt,
+                &amp;result.UpdatedAt,
+        )
+
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("failed to create hello world message: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">return &amp;result, nil</span>
+}
+
+// GetHelloWorldMessages 全てのHello Worldメッセージを取得
+func (s *HelloWorldService) GetHelloWorldMessages() ([]models.HelloWorldMessage, error) <span class="cov0" title="0">{
+        query := `
+                SELECT id, name, message, created_at, updated_at
+                FROM hello_world_messages
+                ORDER BY created_at DESC
+        `
+
+        rows, err := s.db.Query(query)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("failed to query hello world messages: %w", err)
+        }</span>
+        <span class="cov0" title="0">defer rows.Close()
+
+        var messages []models.HelloWorldMessage
+        for rows.Next() </span><span class="cov0" title="0">{
+                var msg models.HelloWorldMessage
+                err := rows.Scan(
+                        &amp;msg.ID,
+                        &amp;msg.Name,
+                        &amp;msg.Message,
+                        &amp;msg.CreatedAt,
+                        &amp;msg.UpdatedAt,
+                )
+                if err != nil </span><span class="cov0" title="0">{
+                        return nil, fmt.Errorf("failed to scan hello world message: %w", err)
+                }</span>
+                <span class="cov0" title="0">messages = append(messages, msg)</span>
+        }
+
+        <span class="cov0" title="0">if err = rows.Err(); err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("error iterating hello world messages: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">return messages, nil</span>
+}
+
+// GetHelloWorldMessageByID IDでHello Worldメッセージを取得
+func (s *HelloWorldService) GetHelloWorldMessageByID(id int) (*models.HelloWorldMessage, error) <span class="cov0" title="0">{
+        query := `
+                SELECT id, name, message, created_at, updated_at
+                FROM hello_world_messages
+                WHERE id = $1
+        `
+
+        var msg models.HelloWorldMessage
+        err := s.db.QueryRow(query, id).Scan(
+                &amp;msg.ID,
+                &amp;msg.Name,
+                &amp;msg.Message,
+                &amp;msg.CreatedAt,
+                &amp;msg.UpdatedAt,
+        )
+
+        if err != nil </span><span class="cov0" title="0">{
+                if err == sql.ErrNoRows </span><span class="cov0" title="0">{
+                        return nil, fmt.Errorf("hello world message not found")
+                }</span>
+                <span class="cov0" title="0">return nil, fmt.Errorf("failed to get hello world message: %w", err)</span>
+        }
+
+        <span class="cov0" title="0">return &amp;msg, nil</span>
+}
+</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>

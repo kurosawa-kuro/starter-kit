@@ -1,0 +1,9 @@
+# Application Configuration
+
+projectName: batch
+appEnv: local
+logLevel: debug
+dbPath: data/batch.db
+
+# Runner mode: workflow | cli
+runnerMode: workflow

@@ -1,0 +1,20 @@
+{
+  "name": "lambda-batch",
+  "version": "1.0.0",
+  "description": "AWS Lambda Batch Hello World Sample with MongoDB",
+  "type": "module",
+  "scripts": {
+    "build": "esbuild --bundle --outfile=./dist/index.js --platform=node --target=node20 ./src/index.ts",
+    "zip": "zip -j lambda.zip dist/index.js",
+    "update": "aws lambda update-function-code --function-name hello-batch --zip-file fileb://lambda.zip",
+    "deploy": "run-s build zip update"
+  },
+  "dependencies": {
+    "mongodb": "^6.12.0"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.145",
+    "esbuild": "^0.21.4",
+    "npm-run-all2": "^6.2.0"
+  }
+}

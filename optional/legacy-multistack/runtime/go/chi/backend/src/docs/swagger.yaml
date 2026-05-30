@@ -1,0 +1,221 @@
+basePath: /
+definitions:
+  models.BaseResponse:
+    properties:
+      message:
+        type: string
+      status:
+        type: string
+      timestamp:
+        type: string
+    type: object
+  models.ErrorResponse:
+    properties:
+      error:
+        type: string
+      message:
+        type: string
+      status:
+        type: string
+      timestamp:
+        type: string
+    type: object
+  models.HelloWorldMessage:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: integer
+      message:
+        type: string
+      name:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  models.HelloWorldRequest:
+    properties:
+      name:
+        type: string
+    type: object
+  models.HelloWorldResponse:
+    properties:
+      message:
+        type: string
+      timestamp:
+        type: string
+      version:
+        type: string
+    type: object
+  models.SuccessResponse:
+    properties:
+      data: {}
+      message:
+        type: string
+      status:
+        type: string
+      timestamp:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: Go + Chi スタータープロジェクトのAPI仕様書
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Go + Chi Starter Project API
+  version: "1.0"
+paths:
+  /:
+    get:
+      consumes:
+      - application/json
+      description: アプリケーション情報を取得
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.BaseResponse'
+      summary: ルートエンドポイント
+      tags:
+      - root
+  /api/health:
+    get:
+      consumes:
+      - application/json
+      description: アプリケーションの状態を確認
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.BaseResponse'
+      summary: ヘルスチェック
+      tags:
+      - health
+  /api/hello-world:
+    get:
+      consumes:
+      - application/json
+      description: Hello Worldメッセージを取得
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/models.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.HelloWorldResponse'
+              type: object
+      summary: Hello World取得
+      tags:
+      - hello-world
+    post:
+      consumes:
+      - application/json
+      description: Hello Worldメッセージを作成
+      parameters:
+      - description: Hello World Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.HelloWorldRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/models.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.HelloWorldMessage'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Hello World作成
+      tags:
+      - hello-world
+  /api/hello-world/messages:
+    get:
+      consumes:
+      - application/json
+      description: 全てのHello Worldメッセージを取得
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/models.SuccessResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/models.HelloWorldMessage'
+                  type: array
+              type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Hello Worldメッセージ一覧取得
+      tags:
+      - hello-world
+  /api/hello-world/messages/{id}:
+    get:
+      consumes:
+      - application/json
+      description: 指定されたIDのHello Worldメッセージを取得
+      parameters:
+      - description: Message ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/models.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.HelloWorldMessage'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Hello Worldメッセージ取得（ID指定）
+      tags:
+      - hello-world
+schemes:
+- http
+- https
+swagger: "2.0"
