@@ -11,6 +11,8 @@ main.py       # argparse CLI
 database.py   # SQLite + SQLAlchemy session
 models.py     # Micropost model
 gcp.py        # GCS / BigQuery helpers
+env/
+  config.yaml # 公開してよい一般設定サンプル
 ```
 
 ## セットアップ
@@ -49,6 +51,12 @@ BigQuery:
 ```bash
 python3 main.py export-bq --table your-project.your_dataset.microposts
 ```
+
+## 設定
+
+`env/config.yaml` は公開してよい一般設定サンプル。実行時は CLI 引数と ADC / Workload Identity を優先する。
+
+実 GCS URI、実 Project ID、service account、token は `env/config.yaml` に入れない。秘密情報が必要になったら `env/secret.yaml` や `.env` を使い、コミットしない。
 
 ## 公開安全
 

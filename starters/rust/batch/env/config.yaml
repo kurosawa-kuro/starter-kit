@@ -1,6 +1,9 @@
-# Application Configuration
+# Public-safe sample settings.
+#
+# Runtime values can be overridden with environment variables.
+# Do not put credentials here.
 
-projectName: batch
+projectName: rust-batch
 appEnv: local
 logLevel: debug
 dbPath: data/batch.db

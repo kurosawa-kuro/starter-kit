@@ -10,3 +10,7 @@ output/
 *.db
 *.sqlite
 *.sqlite3
+.env
+.env.*
+env/secret.yaml
+env/*.local.yaml

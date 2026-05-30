@@ -9,3 +9,7 @@ venv/
 *.ndjson
 logs/
 tmp/
+.env
+.env.*
+env/secret.yaml
+env/*.local.yaml

@@ -2,7 +2,7 @@
 
 Rust で Web API を作る時の公開用ブループリント。
 
-この starter-kit では、通常 API は `starters/rust-api-axum`、フルスタック寄りの構成は `starters/rust-api-axum-fullstack` を正典にする。Rust は「速いから採用」ではなく、型で境界を固定し、長期運用で壊れにくい API を作るために採用する。
+この starter-kit では、通常 API は `starters/rust/api-axum`、フルスタック寄りの構成は `starters/rust/api-axum-fullstack` を正典にする。Rust は「速いから採用」ではなく、型で境界を固定し、長期運用で壊れにくい API を作るために採用する。
 
 ## 採用する場面
 
@@ -45,7 +45,8 @@ src/
 tests/
   api_test.rs
 config/
-  env.example
+env/
+  config.yaml
 docker/
   Dockerfile
 ```
@@ -91,10 +92,10 @@ docker/
 
 | スターター | 用途 |
 |---|---|
-| `starters/rust-api-axum` | 通常 API の第一候補 |
-| `starters/rust-api-axum-fullstack` | API + frontend + DB の構成例 |
-| `starters/rust-batch` | API ではなく batch / job registry の構成例 |
-| `starters/rust-cli` | CLI ツールの構成例 |
+| `starters/rust/api-axum` | 通常 API の第一候補 |
+| `starters/rust/api-axum-fullstack` | API + frontend + DB の構成例 |
+| `starters/rust/batch` | API ではなく batch / job registry の構成例 |
+| `starters/rust/cli` | CLI ツールの構成例 |
 
 ## Makefile 例
 

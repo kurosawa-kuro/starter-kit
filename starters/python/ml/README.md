@@ -29,6 +29,8 @@ src/housing_ml/
   registry/      # run manifest / registry-ready package
   infra/         # GCS / BigQuery integration
   pipelines/     # train pipeline orchestration
+env/
+  config.yaml    # 公開してよい一般設定サンプル
 ```
 
 ## セットアップ
@@ -71,6 +73,12 @@ PYTHONPATH=src python3 -m housing_ml.cli \
 ```
 
 BigQuery table は存在しなければ作成する。metrics mart の schema は `src/housing_ml/infra/bigquery.py` に定義する。
+
+## 設定
+
+`env/config.yaml` は公開してよい一般設定サンプル。実行時は CLI 引数を優先する。
+
+実 bucket、実 BigQuery table、Project ID、service account、token は `env/config.yaml` に入れない。秘密情報が必要になったら `env/secret.yaml` や `.env` を使い、コミットしない。
 
 ## Source of Truth
 

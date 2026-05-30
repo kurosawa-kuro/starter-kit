@@ -12,6 +12,7 @@ import httpx
 import pytest
 
 API_DIR = Path(__file__).resolve().parent.parent
+SRC_DIR = API_DIR / "src"
 
 
 @dataclass
@@ -48,7 +49,7 @@ def live_server():
 
     env = os.environ.copy()
     env["DATABASE_URL"] = f"sqlite:///{db_path}"
-    env["PYTHONPATH"] = str(API_DIR) + os.pathsep + env.get("PYTHONPATH", "")
+    env["PYTHONPATH"] = str(SRC_DIR) + os.pathsep + env.get("PYTHONPATH", "")
     env["PYTHONUNBUFFERED"] = "1"
 
     proc = subprocess.Popen(
@@ -56,7 +57,7 @@ def live_server():
             sys.executable,
             "-m",
             "uvicorn",
-            "main:app",
+            "micropost_api.main:app",
             "--host",
             "127.0.0.1",
             "--port",

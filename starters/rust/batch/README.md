@@ -84,7 +84,7 @@ cargo run -- --help
 `env/config.yaml`:
 
 ```yaml
-projectName: batch
+projectName: rust-batch
 appEnv: local          # local/development/staging/production
 logLevel: debug        # trace/debug/info/warn/error
 dbPath: data/batch.db
@@ -106,6 +106,8 @@ APP_ENV=production LOG_LEVEL=info cargo run
 | `LOG_LEVEL` | logLevel |
 | `DB_PATH` | dbPath |
 | `RUNNER_MODE` | runnerMode |
+
+`env/config.yaml` は公開してよい一般設定だけにする。`DATABASE_URL`、`API_KEY` などの秘密情報は環境変数または `env/secret.yaml` に置き、コミットしない。
 
 ## テスト
 

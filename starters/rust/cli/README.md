@@ -20,9 +20,17 @@ make clippy             # Lint
 ```
 rust-cli/
 ├── Cargo.toml      # clap(derive) + anyhow
+├── env/
+│   └── config.yaml # 公開してよい一般設定サンプル
 ├── src/main.rs     # Parser + Subcommand (greet)
 └── Makefile        # setup/build/run/test/fmt/clippy
 ```
 
 サブコマンドを追加する場合は `src/main.rs` の `enum Commands` に variant を足し、
 `match` 節に処理を追加する。
+
+## 設定
+
+- `env/config.yaml` は公開してよい一般設定だけにする。
+- 秘密情報が必要になったら `env/secret.yaml` や `.env` を使い、コミットしない。
+- 現在の CLI はコマンドライン引数を主に使う。`env/config.yaml` は将来拡張用の既定値置き場。

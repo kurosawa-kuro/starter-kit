@@ -12,9 +12,8 @@ src/
   lib.rs
 tests/
   api_test.rs
-config/
-  env.development
-  env.test
+env/
+  config.yaml
 docker/
   Dockerfile
   docker-compose.yml
@@ -56,6 +55,8 @@ make docker-down
 
 ## 公開安全
 
-- 実 secret、token、DB URL はコードや config に埋め込まない。
+- `env/config.yaml` は公開してよい一般設定だけにする。
+- 実 secret、token、DB URL はコードや `env/config.yaml` に埋め込まない。
+- 秘密情報が必要になったら `env/secret.yaml` や `.env` を使い、コミットしない。
 - `target/` と coverage はコミットしない。
 - 環境ごとの実値は `.env` や secret manager で扱う。

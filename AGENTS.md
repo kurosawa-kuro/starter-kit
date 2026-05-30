@@ -31,6 +31,10 @@ React / Next.js / TypeScript Web API / 多言語レガシー雛形は削除し�
 
 ```text
 starters/                 # 正典スターター。ユーザーが直接選ぶメイン級
+  rust/                   # Rust CLI / batch / API / fullstack
+  python/                 # Python batch / ML / GCP / FastAPI
+  frontend/               # 静的 HTML 管理画面
+  infra/                  # Terraform など IaC
 optional/                 # 既存資産・低優先・レガシー。削除せず目立たせない
 tools/project-generator/  # 新規プロジェクト生成 CLI
 docs/                     # 方針・ガイド・参照ブループリント
@@ -45,17 +49,20 @@ script/                   # 共有スクリプト
 
 ```text
 starters/
-  rust-cli/
-  rust-batch/
-  rust-api-axum/
-  rust-api-axum-fullstack/
-  python-batch/
-  python-ml/
-  python-gcp/
-  python-api-fastapi/
-  terraform/
-  batch/
-  admin-pico/
+  rust/
+    cli/
+    batch/
+    api-axum/
+    api-axum-fullstack/
+  python/
+    batch/
+    ml/
+    gcp/
+    api-fastapi/
+  frontend/
+    admin-pico/
+  infra/
+    terraform/
 ```
 
 新しいメイン級スターターを追加・移動した場合は、少なくとも以下を更新する。

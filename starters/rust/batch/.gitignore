@@ -21,3 +21,6 @@ Thumbs.db
 # Environment overrides (keep config.yaml tracked)
 .env
 .env.local
+.env.*
+env/secret.yaml
+env/*.local.yaml

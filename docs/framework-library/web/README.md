@@ -33,4 +33,4 @@
 |---|---|
 | Web API backend | [backend/](./backend/) |
 | SPA / frontend | [frontend/](./frontend/) |
-| 静的 HTML 管理画面 | `starters/admin-pico` |
+| 静的 HTML 管理画面 | `starters/frontend/admin-pico` |

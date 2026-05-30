@@ -27,19 +27,19 @@ git diff --check
 主要スターター:
 
 ```bash
-(cd starters/rust-cli && cargo test)
-(cd starters/rust-batch && cargo test)
-(cd starters/rust-api-axum && cargo test)
-(cd starters/python-batch && python3 -m unittest discover -s tests)
-(cd starters/python-ml && make test)
-(cd starters/terraform && terraform fmt -check -recursive && terraform validate)
+(cd starters/rust/cli && cargo test)
+(cd starters/rust/batch && cargo test)
+(cd starters/rust/api-axum && cargo test)
+(cd starters/python/batch && python3 -m unittest discover -s tests)
+(cd starters/python/ml && make test)
+(cd starters/infra/terraform && terraform fmt -check -recursive && terraform validate)
 (cd tools/project-generator && cargo test)
 ```
 
 Node 系は依存導入後に確認する。
 
 ```bash
-(cd starters/batch && npm install && npm test)
+(cd optional/typescript-workflow-runner && npm install && npm test)
 ```
 
 ## 4. 秘密情報検索

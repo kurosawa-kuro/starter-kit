@@ -11,7 +11,7 @@ React でフロントエンドを作る時の公開用ブループリント。
 - API と分離した SPA として配信したい。
 - Next.js などのフルスタック framework に入る前に、Vite ベースの薄い構成で始めたい。
 
-単純な静的管理画面で十分なら、`starters/admin-pico` を優先する。
+単純な静的管理画面で十分なら、`starters/frontend/admin-pico` を優先する。
 
 ## 推奨スタック
 

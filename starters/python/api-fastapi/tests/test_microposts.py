@@ -1,4 +1,4 @@
-from models import Micropost
+from micropost_api.models import Micropost
 
 
 def test_index_empty(client):

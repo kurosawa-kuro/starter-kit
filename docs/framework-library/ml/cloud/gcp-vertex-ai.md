@@ -2,7 +2,7 @@
 
 GCP 上で ML 実験、学習、成果物管理、推論、監視へ拡張する時の公開用ブループリント。
 
-この starter-kit では、まず `starters/python-ml` の GCS artifact store + BigQuery metrics mart + run manifest を最小構成にする。Vertex AI はその次の段階として、Custom Training、Pipelines、Model Registry、Batch Prediction、Model Monitoring に接続する。
+この starter-kit では、まず `starters/python/ml` の GCS artifact store + BigQuery metrics mart + run manifest を最小構成にする。Vertex AI はその次の段階として、Custom Training、Pipelines、Model Registry、Batch Prediction、Model Monitoring に接続する。
 
 ## 採用する場面
 
@@ -12,7 +12,7 @@ GCP 上で ML 実験、学習、成果物管理、推論、監視へ拡張する
 - pipeline run、artifact lineage、定期 retraining、monitoring を運用に入れたい。
 - Cloud Run Job / GitHub Actions / Composer から一段進めて、ML workflow を Vertex AI 側に寄せたい。
 
-小さい portfolio や検証段階では、いきなり Vertex AI Pipelines に入れず、`starters/python-ml` の local + GCS + BigQuery で十分なことが多い。
+小さい portfolio や検証段階では、いきなり Vertex AI Pipelines に入れず、`starters/python/ml` の local + GCS + BigQuery で十分なことが多い。
 
 ## 推奨スタック
 
@@ -142,10 +142,10 @@ GCS の registry-ready package を登録し、version / alias / metadata を管�
 
 | スターター | GCP / Vertex AI への接続 |
 |---|---|
-| `starters/python-ml` | GCS artifact store / BigQuery metrics mart / registry-ready package |
-| `starters/python-gcp` | GCS / BigQuery helper の最小 CLI |
+| `starters/python/ml` | GCS artifact store / BigQuery metrics mart / registry-ready package |
+| `starters/python/gcp` | GCS / BigQuery helper の最小 CLI |
 | `script/gcp/` | gcloud / project / service account / storage の補助 script |
-| `starters/terraform` | GCP resource を IaC へ寄せる前段 |
+| `starters/infra/terraform` | GCP resource を IaC へ寄せる前段 |
 
 ## 公開前チェック
 

@@ -2,7 +2,7 @@
 
 ML / MLOps の参照ブループリント。
 
-`starters/python-ml` を正典スターターにし、ここでは classical ML と managed ML platform の設計方針を分けて管理する。
+`starters/python/ml` を正典スターターにし、ここでは classical ML と managed ML platform の設計方針を分けて管理する。
 
 ## 構成
 
@@ -16,7 +16,7 @@ ML / MLOps の参照ブループリント。
 | 要件 | 推奨 |
 |---|---|
 | tabular data の小さな分類・回帰 | [classical/scikit-learn.md](./classical/scikit-learn.md) |
-| GCS / BigQuery と接続する ML pipeline | `starters/python-ml` |
+| GCS / BigQuery と接続する ML pipeline | `starters/python/ml` |
 | Vertex AI の training / registry / prediction | [cloud/gcp-vertex-ai.md](./cloud/gcp-vertex-ai.md) |
 
 ## 公開安全

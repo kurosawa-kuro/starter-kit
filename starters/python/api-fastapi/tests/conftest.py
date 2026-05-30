@@ -7,10 +7,10 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src")))
 
-from database import Base, get_db  # noqa: E402
-from main import app  # noqa: E402
+from micropost_api.db import Base, get_db  # noqa: E402
+from micropost_api.main import app  # noqa: E402
 
 
 @pytest.fixture

@@ -26,6 +26,8 @@ make test
 ├── Makefile
 ├── data/
 │   └── items.csv
+├── env/
+│   └── config.yaml
 ├── output/
 │   └── summary.json
 ├── src/
@@ -40,5 +42,7 @@ make test
 
 - まずは標準ライブラリで済ませる
 - 入力は `data/`、出力は `output/`
+- `env/config.yaml` は公開してよい一般設定サンプル
 - 生成物はコミットしない
+- 秘密情報が必要になったら `env/secret.yaml` や `.env` を使い、コミットしない
 - 必要になった時だけ DB / GCP / キュー / スケジューラを追加する

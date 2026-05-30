@@ -2,7 +2,7 @@
 
 Python + FastAPI で Web API または小さな CRUD アプリを作る時の公開用ブループリント。
 
-この starter-kit では、`starters/python-api-fastapi` を FastAPI の正典スターターにする。専用フロントエンドを立てず、Jinja テンプレートで最小 UI を持つ構成を基本にする。
+この starter-kit では、`starters/python/api-fastapi` を FastAPI の正典スターターにする。専用フロントエンドを立てず、Jinja テンプレートで最小 UI を持つ構成を基本にする。
 
 ## 採用する場面
 
@@ -30,25 +30,30 @@ Python + FastAPI で Web API または小さな CRUD アプリを作る時の公
 ## ディレクトリ
 
 ```text
-main.py
-database.py
-models.py
-schemas.py
-services/
-  micropost_service.py
-templates/
-  base.html
-  index.html
+src/
+  micropost_api/
+    main.py
+    db.py
+    models.py
+    schemas.py
+    services/
+      micropost_service.py
+    web/
+      routes.py
+    templates/
+      base.html
+      index.html
 tests/
   test_app.py
 e2e/
   test_workflow.py
-.env.example
+env/
+  config.yaml
 requirements.txt
 Makefile
 ```
 
-小さいスターターでは `main.py` に route を置いてよい。機能が増えたら `routers/`, `services/`, `schemas.py` に分ける。
+小さいスターターでもアプリ本体は `src/<package>/` に置く。route が増えたら `web/routes.py` を分割し、業務ロジックは `services/` に逃がす。
 
 ## API 契約
 
@@ -104,10 +109,10 @@ GCP_LOGGING_ENABLED=0
 
 | スターター | 用途 |
 |---|---|
-| `starters/python-api-fastapi` | FastAPI + Jinja + SQLite の最小 CRUD |
-| `starters/python-gcp` | GCS / BigQuery と連携する Python batch |
-| `starters/python-ml` | ML experiment / artifact / metrics pipeline |
-| `starters/python-batch` | 単純な Python batch |
+| `starters/python/api-fastapi` | FastAPI + Jinja + SQLite の最小 CRUD |
+| `starters/python/gcp` | GCS / BigQuery と連携する Python batch |
+| `starters/python/ml` | ML experiment / artifact / metrics pipeline |
+| `starters/python/batch` | 単純な Python batch |
 
 ## Makefile 例
 
@@ -118,12 +123,12 @@ install:
 	python3 -m pip install -r requirements.txt
 
 run:
-	python3 -m uvicorn main:app --reload --host 127.0.0.1 --port 8000
+	PYTHONPATH=src python3 -m uvicorn micropost_api.main:app --reload --host 127.0.0.1 --port 8000
 
 test:
-	python3 -m unittest discover -s tests
+	PYTHONPATH=src python3 -m pytest tests
 
 clean:
-	rm -rf __pycache__ .pytest_cache
+	rm -rf src/*/__pycache__ tests/__pycache__ .pytest_cache
 	rm -f app.db
 ```

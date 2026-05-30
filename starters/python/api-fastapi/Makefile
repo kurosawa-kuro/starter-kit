@@ -12,14 +12,15 @@ install:
 	pip install -r requirements.txt
 
 run:
-	uvicorn main:app --reload --host 127.0.0.1 --port 8000
+	PYTHONPATH=src uvicorn micropost_api.main:app --reload --host 127.0.0.1 --port 8000
 
 test:
-	python3 -m pytest tests
+	PYTHONPATH=src python3 -m pytest tests
 
 e2e:
-	python3 -m pytest e2e
+	PYTHONPATH=src python3 -m pytest e2e
 
 clean:
-	rm -rf __pycache__ tests/__pycache__ e2e/__pycache__ .pytest_cache
+	rm -rf src/micropost_api/__pycache__ src/micropost_api/web/__pycache__
+	rm -rf tests/__pycache__ e2e/__pycache__ .pytest_cache
 	rm -f microposts.db

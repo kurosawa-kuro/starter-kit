@@ -47,7 +47,7 @@ git diff --check
 
 - `starters/` はメイン級、`optional/` は低優先・比較用・レガシー。
 - Python ML は単体学習ではなく、GCS artifact、BigQuery metrics、manifest へつながる pipeline として扱う。
-- Cloud / GCP 操作は `script/gcp/` と `starters/terraform/` を優先して見る。
+- Cloud / GCP 操作は `script/gcp/` と `starters/infra/terraform/` を優先して見る。
 - 公開前提なので、実 Project ID、実通知先、secret、credential、運用ログを残さない。
 
 ## レビュー観点

@@ -27,17 +27,20 @@
 
 ```text
 starters/
-  rust-cli/
-  rust-batch/
-  rust-api-axum/
-  rust-api-axum-fullstack/
-  python-batch/
-  python-ml/
-  python-gcp/
-  python-api-fastapi/
-  terraform/
-  batch/
-  admin-pico/
+  rust/
+    cli/
+    batch/
+    api-axum/
+    api-axum-fullstack/
+  python/
+    batch/
+    ml/
+    gcp/
+    api-fastapi/
+  frontend/
+    admin-pico/
+  infra/
+    terraform/
 ```
 
 ## 技術方針
@@ -48,10 +51,10 @@ CLI、バッチ、通常 API の第一候補。API は原則 `axum`。
 
 対象:
 
-- `rust-cli`
-- `rust-batch`
-- `rust-api-axum`
-- `rust-api-axum-fullstack`
+- `starters/rust/cli`
+- `starters/rust/batch`
+- `starters/rust/api-axum`
+- `starters/rust/api-axum-fullstack`
 
 ### Python
 
@@ -59,12 +62,12 @@ CLI、バッチ、通常 API の第一候補。API は原則 `axum`。
 
 対象:
 
-- `python-batch`
-- `python-ml`
-- `python-gcp`
-- `python-api-fastapi`
+- `starters/python/batch`
+- `starters/python/ml`
+- `starters/python/gcp`
+- `starters/python/api-fastapi`
 
-`python-ml` は単体学習スクリプトではなく、GCS artifact store、BigQuery metrics mart、run manifest へつながる最小 ML pipeline として扱う。
+`starters/python/ml` は単体学習スクリプトではなく、GCS artifact store、BigQuery metrics mart、run manifest へつながる最小 ML pipeline として扱う。
 
 ### Terraform
 
@@ -72,7 +75,7 @@ IaC の第一候補。GCP を優先し、AWS は必要時に補足する。
 
 対象:
 
-- `terraform`
+- `starters/infra/terraform`
 
 ### バッチ
 
@@ -80,8 +83,9 @@ IaC の第一候補。GCP を優先し、AWS は必要時に補足する。
 
 対象:
 
-- `batch`
 - `script/gcp`
+
+TypeScript の workflow-runner は正典スターターから外し、比較・参照用として `optional/typescript-workflow-runner` に下げる。workflow-runner を正典化するなら Python 版として設計する。
 
 ## API 方針
 
@@ -101,7 +105,7 @@ ML アプリ API  : Python + FastAPI
 - 最小 CSS
 - 必要最小限の JavaScript
 
-`admin-pico` はこの方針を体現するメイン級スターターとして `starters/` に置く。
+`admin-pico` はこの方針を体現するメイン級スターターとして `starters/frontend/admin-pico` に置く。
 
 React / Next.js / Vue / Hono / Express / JVM / Go / ML platform などの参照情報は `docs/framework-library/` に置く。実装資産は必要に応じて `optional/` に残す。
 
@@ -113,6 +117,7 @@ React / Next.js / Vue / Hono / Express / JVM / Go / ML platform などの参照�
 
 - React / Next.js / Vue などのフロント専用構成
 - TypeScript Web API
+- TypeScript workflow runner
 - Go / JVM / Express などの比較用またはレガシー雛形
 - 過度な Docker / Kubernetes / CI/CD 構成
 

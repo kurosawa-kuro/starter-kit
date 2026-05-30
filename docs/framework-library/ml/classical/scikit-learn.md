@@ -2,7 +2,7 @@
 
 scikit-learn 系のモデルを使って、公開用の小さな ML 実験・学習パイプラインを作る時のブループリント。
 
-この starter-kit では、`starters/python-ml` が ML 実験・成果物管理・DWH 連携の正典スターター。scikit-learn は「 notebook で試すだけ」ではなく、data / features / training / evaluation / registry-ready artifact に分けて扱う。
+この starter-kit では、`starters/python/ml` が ML 実験・成果物管理・DWH 連携の正典スターター。scikit-learn は「 notebook で試すだけ」ではなく、data / features / training / evaluation / registry-ready artifact に分けて扱う。
 
 ## 採用する場面
 
@@ -132,9 +132,9 @@ metrics mart は「実験比較の読み取り先」にする。ローカル run
 
 | スターター | 用途 |
 |---|---|
-| `starters/python-ml` | LightGBM + GCS + BigQuery の ML pipeline |
-| `starters/python-gcp` | GCS / BigQuery helper の最小 batch |
-| `starters/python-batch` | 外部クラウドなしの単純 batch |
+| `starters/python/ml` | LightGBM + GCS + BigQuery の ML pipeline |
+| `starters/python/gcp` | GCS / BigQuery helper の最小 batch |
+| `starters/python/batch` | 外部クラウドなしの単純 batch |
 
 ## Makefile 例
 

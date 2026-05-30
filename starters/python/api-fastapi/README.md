@@ -7,11 +7,17 @@ Jinja テンプレートを使い、専用フロントエンドを立てずに�
 ## 構成
 
 ```text
-main.py          # FastAPI app / routes
-database.py      # SQLite + SQLAlchemy session
-models.py        # Micropost model
-gcp.py           # Cloud Logging style middleware
-templates/       # Jinja templates
+src/
+  micropost_api/
+    main.py             # FastAPI app factory
+    db.py               # SQLite + SQLAlchemy session
+    models.py           # Micropost model
+    gcp_logging.py      # Cloud Logging style middleware
+    web/
+      routes.py         # HTML routes
+    templates/          # Jinja templates
+env/
+  config.yaml    # 公開してよい一般設定サンプル
 tests/           # unit tests
 e2e/             # e2e tests
 ```
@@ -46,6 +52,8 @@ make test
 
 デフォルトではローカル SQLite を使う。生成される `microposts.db` は `.gitignore` 対象。
 
+`env/config.yaml` は公開してよい一般設定サンプル。実行時の DB URL や Cloud Logging 設定は環境変数で上書きする。
+
 Cloud Logging 風の JSON ログを有効にする場合:
 
 ```bash
@@ -56,4 +64,5 @@ GCP_LOGGING_ENABLED=1 make run
 
 - `microposts.db` はコミットしない。
 - 実 `DATABASE_URL`、service account、API key、token は置かない。
+- 秘密情報が必要になったら `env/secret.yaml` や `.env` を使い、コミットしない。
 - サンプルデータは fixture / dummy のみ使う。

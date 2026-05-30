@@ -1,6 +1,9 @@
 /target
 /coverage
 .env
+.env.*
+env/secret.yaml
+env/*.local.yaml
 data/*.sqlite3
 client/node_modules
 client/dist
