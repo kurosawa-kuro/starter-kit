@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Train LightGBM on California housing with artifact and metrics tracking."
@@ -55,3 +56,7 @@ def main() -> None:
     print(f"Run id: {result.run_id}")
     if result.artifact_uri:
         print(f"Artifact URI: {result.artifact_uri}")
+
+
+if __name__ == "__main__":
+    main()

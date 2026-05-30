@@ -103,7 +103,7 @@ ML アプリ API  : Python + FastAPI
 
 `admin-pico` はこの方針を体現するメイン級スターターとして `starters/` に置く。
 
-React / Next.js / Vue / Hono / Express / JVM / Go などの参照情報は `docs/web-frameworks/` に置く。実装資産は必要に応じて `optional/` に残す。
+React / Next.js / Vue / Hono / Express / JVM / Go / ML platform などの参照情報は `docs/framework-library/` に置く。実装資産は必要に応じて `optional/` に残す。
 
 ## optional の扱い
 

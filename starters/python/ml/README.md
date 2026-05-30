@@ -2,7 +2,7 @@
 
 California Housing の回帰モデルを題材にした、最小構成の ML Lakehouse 風パイプライン。
 
-単体の `train.py` ではなく、Databricks / Lakehouse の考え方を GCP へ翻訳した構成にしている。
+単体学習スクリプトではなく、Databricks / Lakehouse の考え方を GCP へ翻訳した構成にしている。
 
 ## 設計対応
 
@@ -29,8 +29,6 @@ src/housing_ml/
   registry/      # run manifest / registry-ready package
   infra/         # GCS / BigQuery integration
   pipelines/     # train pipeline orchestration
-train.py         # backward-compatible CLI entrypoint
-gcp.py           # backward-compatible GCP helper exports
 ```
 
 ## セットアップ
@@ -50,7 +48,7 @@ make train
 または:
 
 ```bash
-python3 train.py --output-dir artifacts --seed 42
+PYTHONPATH=src python3 -m housing_ml.cli --output-dir artifacts --seed 42
 ```
 
 出力:
@@ -66,7 +64,7 @@ artifacts/
 ## GCS / BigQuery 連携
 
 ```bash
-python3 train.py \
+PYTHONPATH=src python3 -m housing_ml.cli \
   --output-dir artifacts \
   --gcs-prefix gs://your-bucket/models/lightgbm-california-housing \
   --bq-metrics-table your-project.your_dataset.gold_model_metrics

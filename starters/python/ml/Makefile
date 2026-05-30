@@ -7,7 +7,7 @@ help:
 	@echo "  clean  Remove local generated artifacts"
 
 train:
-	python3 train.py
+	PYTHONPATH=src python3 -m housing_ml.cli
 
 test:
 	PYTHONPATH=src python3 -m unittest discover -s tests

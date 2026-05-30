@@ -123,7 +123,7 @@ templates/
 
 - `docs/README.md` はドキュメント全体の索引。
 - `docs/STARTER-POLICY.md` はスターターの配置判断の根拠。
-- `docs/web-frameworks/` は正典スターターではなく、Web フレームワーク別の参照ブループリント。
+- `docs/framework-library/` は正典スターターではなく、Web / ML framework 別の参照ブループリント。
 - 古い個人アプリ由来の手順、実プロジェクト名、実通知先、実ログを docs に残さない。
 
 ドキュメントは「今後の生成・移植で迷わないこと」を目的にする。過去メモをそのまま保存する場所ではない。

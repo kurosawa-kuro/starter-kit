@@ -10,7 +10,7 @@ starter-kit のドキュメント索引。
 |---|---|
 | [STARTER-POLICY.md](./STARTER-POLICY.md) | `starters/` と `optional/` の配置判断 |
 | [guides/](./guides/) | リポジトリ共通の開発ルール |
-| [web-frameworks/](./web-frameworks/) | Web フレームワーク別の参照ブループリント |
+| [framework-library/](./framework-library/) | Web / ML framework 別の参照ブループリント |
 | [database/](./database/) | PostgreSQL のローカル開発・運用メモ |
 | [ai-tools/](./ai-tools/) | AI コーディング環境とエージェント運用メモ |
 | [prompts/](./prompts/) | 新規プロジェクト作成用プロンプト |

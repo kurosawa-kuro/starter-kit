@@ -1,6 +1,6 @@
-# Web Framework Blueprints
+# Web Frameworks
 
-このディレクトリは、Web フレームワーク別の参照ブループリントを置く場所。
+このディレクトリは、Web framework 別の参照ブループリントを置く場所。
 
 `starters/` に置くメイン級テンプレートとは役割を分ける。ここでは「そのフレームワークで作るなら、どの構成・境界・公開前ルールを採用するか」を短く固定する。
 
@@ -22,24 +22,15 @@
 
 ## 一覧
 
-| ファイル | 用途 |
+| 場所 | 用途 |
 |---|---|
-| [express.md](./express.md) | Node.js + Express の API 構成 |
-| [hono.md](./hono.md) | TypeScript + Hono の軽量 API 構成 |
-| [go-chi.md](./go-chi.md) | Go + chi の標準 HTTP API 構成 |
-| [go-gin.md](./go-gin.md) | Go + Gin の API 構成 |
-| [java-springboot.md](./java-springboot.md) | Java + Spring Boot の業務 API 構成 |
-| [kotlin-springboot.md](./kotlin-springboot.md) | Kotlin + Spring Boot の型安全 API 構成 |
-| [vue.md](./vue.md) | Vue 3 + Vite のフロントエンド構成 |
+| [backend/](./backend/) | API backend framework |
+| [frontend/](./frontend/) | SPA / frontend framework |
 
 ## 採用判断
 
 | 要件 | 推奨 |
 |---|---|
-| 小さく速い TypeScript API | Hono |
-| Node.js の定番 API | Express |
-| Go 標準寄りの薄い API | chi |
-| Go でフル機能な Web API | Gin |
-| 企業系・長期保守・JVM | Spring Boot |
-| Spring Boot で null 安全や DSL を重視 | Kotlin Spring Boot |
-| 管理画面・SPA | Vue 3 + Vite |
+| Web API backend | [backend/](./backend/) |
+| SPA / frontend | [frontend/](./frontend/) |
+| 静的 HTML 管理画面 | `starters/admin-pico` |

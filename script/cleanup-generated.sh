@@ -14,6 +14,8 @@ paths=(
   "starters/python-ml/artifacts"
   "starters/python-ml/src/housing_ml/__pycache__"
   "starters/python-ml/src/housing_ml/infra/__pycache__"
+  "starters/python-ml/src/housing_ml/pipelines/__pycache__"
+  "starters/python-ml/src/housing_ml/registry/__pycache__"
   "starters/python-ml/tests/__pycache__"
   "starters/batch/data"
   "starters/rust-api-axum-fullstack/client/dist"
