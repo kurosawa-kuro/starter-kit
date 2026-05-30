@@ -12,14 +12,15 @@ install:
 	pip install -r requirements.txt
 
 seed:
-	python3 main.py seed
+	PYTHONPATH=src python3 -m micropost_gcp.cli seed
 
 list:
-	python3 main.py list
+	PYTHONPATH=src python3 -m micropost_gcp.cli list
 
 test:
-	python3 -m py_compile main.py database.py models.py gcp.py
+	PYTHONPATH=src python3 -m py_compile $$(find src -name '*.py' | sort)
 
 clean:
-	rm -rf __pycache__ .pytest_cache
+	rm -rf src/micropost_gcp/__pycache__ src/micropost_gcp/exporters/__pycache__
+	rm -rf .pytest_cache
 	rm -f microposts.db *.ndjson

@@ -7,10 +7,14 @@ GCP 連携は任意。ローカル実行だけなら Google Cloud 認証は不�
 ## 構成
 
 ```text
-main.py       # argparse CLI
-database.py   # SQLite + SQLAlchemy session
-models.py     # Micropost model
-gcp.py        # GCS / BigQuery helpers
+src/
+  micropost_gcp/
+    cli.py            # argparse CLI
+    db.py             # SQLite + SQLAlchemy session
+    models.py         # Micropost model
+    repository.py     # CRUD operations
+    exporters/
+      gcp.py          # GCS / BigQuery helpers
 env/
   config.yaml # 公開してよい一般設定サンプル
 ```
@@ -33,9 +37,9 @@ make list
 CLI:
 
 ```bash
-python3 main.py create --title "Hello" --content "Local batch"
-python3 main.py list
-python3 main.py export-gcs --output posts.ndjson
+PYTHONPATH=src python3 -m micropost_gcp.cli create --title "Hello" --content "Local batch"
+PYTHONPATH=src python3 -m micropost_gcp.cli list
+PYTHONPATH=src python3 -m micropost_gcp.cli export-gcs --output posts.ndjson
 ```
 
 ## GCS / BigQuery
@@ -43,13 +47,13 @@ python3 main.py export-gcs --output posts.ndjson
 GCS:
 
 ```bash
-python3 main.py export-gcs --gcs-uri gs://your-bucket/path/posts.ndjson
+PYTHONPATH=src python3 -m micropost_gcp.cli export-gcs --gcs-uri gs://your-bucket/path/posts.ndjson
 ```
 
 BigQuery:
 
 ```bash
-python3 main.py export-bq --table your-project.your_dataset.microposts
+PYTHONPATH=src python3 -m micropost_gcp.cli export-bq --table your-project.your_dataset.microposts
 ```
 
 ## 設定

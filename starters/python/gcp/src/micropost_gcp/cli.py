@@ -3,55 +3,22 @@ import sys
 
 from sqlalchemy.orm import Session
 
-from database import Base, SessionLocal, engine
-from models import Micropost
-
-from gcp import (
+from micropost_gcp.db import SessionLocal, init_db
+from micropost_gcp.exporters.gcp import (
     BigQueryTarget,
     dump_ndjson,
     load_to_bigquery,
     upload_ndjson_to_gcs,
 )
-
-
-def create_post(db: Session, title: str, content: str) -> Micropost:
-    post = Micropost(title=title.strip(), content=content.strip())
-    db.add(post)
-    db.commit()
-    db.refresh(post)
-    return post
-
-
-def list_posts(db: Session) -> list[Micropost]:
-    return db.query(Micropost).order_by(Micropost.created_at.desc()).all()
-
-
-def get_post(db: Session, post_id: int) -> Micropost | None:
-    return db.get(Micropost, post_id)
-
-
-def update_post(
-    db: Session, post_id: int, title: str | None, content: str | None
-) -> Micropost | None:
-    post = db.get(Micropost, post_id)
-    if post is None:
-        return None
-    if title is not None:
-        post.title = title.strip()
-    if content is not None:
-        post.content = content.strip()
-    db.commit()
-    db.refresh(post)
-    return post
-
-
-def delete_post(db: Session, post_id: int) -> bool:
-    post = db.get(Micropost, post_id)
-    if post is None:
-        return False
-    db.delete(post)
-    db.commit()
-    return True
+from micropost_gcp.models import Micropost
+from micropost_gcp.repository import (
+    create_post,
+    delete_post,
+    get_post,
+    list_posts,
+    seed_posts,
+    update_post,
+)
 
 
 def format_post(post: Micropost) -> str:
@@ -115,8 +82,8 @@ def cmd_export_gcs(db: Session, args: argparse.Namespace) -> int:
     posts = list_posts(db)
     payload = dump_ndjson(posts)
     if args.output:
-        with open(args.output, "wb") as f:
-            f.write(payload)
+        with open(args.output, "wb") as file:
+            file.write(payload)
         print(f"Wrote {len(posts)} rows to {args.output}")
     if args.gcs_uri:
         upload_ndjson_to_gcs(payload, args.gcs_uri)
@@ -138,19 +105,13 @@ def cmd_export_bq(db: Session, args: argparse.Namespace) -> int:
 
 
 def cmd_seed(db: Session, args: argparse.Namespace) -> int:
-    samples = [
-        ("Hello", "First micropost from batch."),
-        ("SQLAlchemy", "Batch CRUD with SQLite."),
-        ("MLOps", "Batch pipeline sample entry."),
-    ]
-    for title, content in samples:
-        post = create_post(db, title, content)
+    for post in seed_posts(db):
         print(f"Seeded id={post.id} title={post.title!r}")
     return 0
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Micropost CRUD batch (SQLite + SQLAlchemy)")
+    parser = argparse.ArgumentParser(description="Micropost CRUD batch (SQLite + GCP)")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     p_create = subparsers.add_parser("create", help="Create a micropost")
@@ -182,9 +143,7 @@ def build_parser() -> argparse.ArgumentParser:
         "export-gcs", help="Export microposts as NDJSON (stdout / file / GCS)"
     )
     p_export_gcs.add_argument("--output", help="Local file path to write NDJSON")
-    p_export_gcs.add_argument(
-        "--gcs-uri", help="gs://bucket/path.ndjson destination"
-    )
+    p_export_gcs.add_argument("--gcs-uri", help="gs://bucket/path.ndjson destination")
     p_export_gcs.set_defaults(func=cmd_export_gcs)
 
     p_export_bq = subparsers.add_parser(
@@ -204,7 +163,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
-    Base.metadata.create_all(bind=engine)
+    init_db()
     parser = build_parser()
     args = parser.parse_args(argv)
 
