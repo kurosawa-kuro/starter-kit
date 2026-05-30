@@ -2,55 +2,88 @@
 
 ## 目的
 
-最近よく使う技術を前提に、プロジェクト作成時に選びやすいスターターキット構成へ整理する。
+新規プロジェクトを始める時に、よく使う構成へ迷わず到達できる状態を保つ。
 
-## 基本方針
+このリポジトリは技術カタログではなく、実際に使うスターターを前に出すための作業台。使う頻度が低いもの、比較用、レガシー資産は削除せず `optional/` に下げる。
 
-スターターキットは、利用頻度が高い技術から優先して用意する。
-
-優先順位は以下とする。
+## 優先順位
 
 1. Rust
 2. Python
 3. Terraform
 4. バッチ
 
-API（フロントは React 等のポート分離はできるだけ避ける。HTML テンプレートで我慢する）。
+## 配置判断
 
-## 技術別スターター構成
+| 配置 | 判断基準 |
+|---|---|
+| `starters/` | 今後も直接選ぶメイン級スターター |
+| `optional/` | 残すが通常導線では目立たせない既存資産 |
+| `tools/` | スターターを生成・検査・補助するツール |
+| `docs/` | 方針、参照ブループリント、生成先ドキュメント雛形 |
+| `script/` | リポジトリ横断の補助 CLI |
 
-### 1. Rust
+## 正典スターター
 
-最優先のスターターキットとする。主な用途は CLI / バッチ処理 / API / 小規模ツール /
-高速なユーティリティ。
+```text
+starters/
+  rust-cli/
+  rust-batch/
+  rust-api-axum/
+  rust-api-axum-fullstack/
+  python-batch/
+  python-ml/
+  python-gcp/
+  python-api-fastapi/
+  terraform/
+  batch/
+  admin-pico/
+```
 
-API を作成する場合は、原則として `axum` を使用する。
+## 技術方針
 
-想定スターター: `rust-cli` / `rust-batch` / `rust-api-axum` / `rust-api-axum-fullstack`
+### Rust
 
-### 2. Python
+CLI、バッチ、通常 API の第一候補。API は原則 `axum`。
 
-AI / ML / GCP 関連のプロジェクトで使用する。主な用途は単純バッチ / AI 関連処理 /
-ML モデル学習 / GCP 連携 / データ処理 / ML アプリ用 API。
+対象:
 
-ML では、原則として `scikit-learn` と `LightGBM` を使用する。
-ML アプリの API を作成する場合は `FastAPI` を使用する。
+- `rust-cli`
+- `rust-batch`
+- `rust-api-axum`
+- `rust-api-axum-fullstack`
 
-想定スターター: `python-batch` / `python-ml` / `python-gcp` / `python-api-fastapi`
+### Python
 
-### 3. Terraform
+単純バッチ、ML、GCP 連携、ML アプリ API で使う。
 
-IaC 用のスターターキット。インフラ構成管理 / クラウドリソース管理 / GCP・AWS の環境構築。
+対象:
 
-想定スターター: `terraform`
+- `python-batch`
+- `python-ml`
+- `python-gcp`
+- `python-api-fastapi`
 
-### 4. バッチ
+`python-ml` は単体学習スクリプトではなく、GCS artifact store、BigQuery metrics mart、run manifest へつながる最小 ML pipeline として扱う。
 
-簡易的なローカル実行や補助スクリプト用。ただし基本方針としては Rust を優先する。
+### Terraform
 
-想定スターター: `batch`
+IaC の第一候補。GCP を優先し、AWS は必要時に補足する。
 
-## API 構成方針
+対象:
+
+- `terraform`
+
+### バッチ
+
+軽いローカル workflow や補助 script。高頻度・長期運用化するものは Rust / Python へ移す。
+
+対象:
+
+- `batch`
+- `script/gcp`
+
+## API 方針
 
 ```text
 通常 API       : Rust + axum
@@ -59,47 +92,38 @@ ML アプリ API  : Python + FastAPI
 
 ## フロントエンド方針
 
-フロントエンドは、できるだけ専属のフロントエンド技術を使わずに簡略化する。
-React / Next.js などは原則として使わない。必要な画面は以下で対応する。
+デフォルトでは大きな SPA に寄せない。
 
-* Jinja
-* HTML テンプレート
-* 最小限の CSS
-* 必要最小限の JavaScript
+優先:
 
-この方針を体現する `admin-pico`（Pico CSS の静的 HTML テンプレート）は、フロント用の
-**メイン級スターター**として `starters/` に置く。
+- Jinja / server-side template
+- 静的 HTML
+- 最小 CSS
+- 必要最小限の JavaScript
 
-## スターター一覧（優先順）
+`admin-pico` はこの方針を体現するメイン級スターターとして `starters/` に置く。
 
-```text
-starters/
-  rust-cli/             # 1
-  rust-batch/           # 2
-  rust-api-axum/        # 3
-  rust-api-axum-fullstack/  # 4
-  python-batch/         # 5
-  python-ml/            # 6
-  python-gcp/           # 7
-  python-api-fastapi/   # 8
-  terraform/            # 9
-  batch/                # 10
-  admin-pico/           # フロント方針(HTML/最小JS)を体現するメイン級
-```
+React / Next.js / Vue / Hono / Express / JVM / Go などの参照情報は `docs/web-frameworks/` に置く。実装資産は必要に応じて `optional/` に残す。
 
-## 目立たせない方針（含めるが優先しない）
+## optional の扱い
 
-> 補足: 当初は「含めない（非方針）」としていたが、**削除はせず「目立たせない」**運用に変更した。
-> 既存資産は捨てず、`optional/` に退避して通常は前面に出さない。
+`optional/` は削除予定置き場ではない。通常導線で前面に出さないだけ。
 
-以下は基本スターターには含めず、`optional/` に配置して目立たせない。
+該当例:
 
-* React
-* Next.js
-* フロントエンド専用構成（admin: React/Vue/Next/Nuxt 等）
-* 過度なマイクロサービス構成
-* 不要な CI/CD 構成
-* 最初から複雑な Docker / Kubernetes 構成
-* 多言語レガシー雛形（Go / JVM / Express など: `optional/legacy-multistack/`）
+- React / Next.js / Vue などのフロント専用構成
+- TypeScript Web API
+- Go / JVM / Express などの比較用またはレガシー雛形
+- 過度な Docker / Kubernetes / CI/CD 構成
 
-プロジェクト生成器（旧 `starter-cli`）は `tools/project-generator/` に置く。
+## 新規追加時の必須確認
+
+新しいスターターを追加・移動したら、最低限以下を更新する。
+
+- ルート `README.md`
+- `CLAUDE.md`
+- `AGENTS.md`
+- 本ファイル
+- 対象スターターの `README.md`
+
+Public 公開前提で、実 Project ID、実通知先、API key、token、`.env`、`env/secret.yaml`、`*.tfvars`、生成 artifact は含めない。
