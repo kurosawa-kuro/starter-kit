@@ -16,6 +16,7 @@ starter-kit のドキュメント索引。
 | [prompts/](./prompts/) | 新規プロジェクト作成用プロンプト |
 | [templates/project-docs/](./templates/project-docs/) | 生成先プロジェクトへコピーする汎用ドキュメント雛形 |
 | [task/](./task/) | project-generator の仕様メモ |
+| [PUBLIC-RELEASE-CHECK.md](./PUBLIC-RELEASE-CHECK.md) | GitHub Public 公開前チェック |
 
 ## 権威順位
 

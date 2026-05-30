@@ -9,7 +9,7 @@
 //! - List all available workflow steps
 
 use std::collections::HashMap;
-use std::sync::RwLock;
+use std::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 use once_cell::sync::Lazy;
 
@@ -19,6 +19,14 @@ use crate::application::JobDefinition;
 static REGISTRY: Lazy<RwLock<HashMap<String, JobDefinition>>> =
     Lazy::new(|| RwLock::new(HashMap::new()));
 
+fn registry_read() -> RwLockReadGuard<'static, HashMap<String, JobDefinition>> {
+    REGISTRY.read().unwrap_or_else(|err| err.into_inner())
+}
+
+fn registry_write() -> RwLockWriteGuard<'static, HashMap<String, JobDefinition>> {
+    REGISTRY.write().unwrap_or_else(|err| err.into_inner())
+}
+
 /// Register a job (workflow step) with the registry
 ///
 /// Jobs must be registered to be discoverable by the workflow runner.
@@ -27,7 +35,7 @@ static REGISTRY: Lazy<RwLock<HashMap<String, JobDefinition>>> =
 ///
 /// Panics if a job with the same name is already registered.
 pub fn register_job(job: JobDefinition) {
-    let mut registry = REGISTRY.write().unwrap();
+    let mut registry = registry_write();
     if registry.contains_key(&job.name) {
         panic!("Job \"{}\" is already registered", job.name);
     }
@@ -44,7 +52,7 @@ pub fn register_job(job: JobDefinition) {
 ///
 /// Job definition if found
 pub fn get_job(name: &str) -> Option<JobDefinition> {
-    let registry = REGISTRY.read().unwrap();
+    let registry = registry_read();
     registry.get(name).cloned()
 }
 
@@ -54,7 +62,7 @@ pub fn get_job(name: &str) -> Option<JobDefinition> {
 ///
 /// Vector of all registered job definitions
 pub fn get_all_jobs() -> Vec<JobDefinition> {
-    let registry = REGISTRY.read().unwrap();
+    let registry = registry_read();
     registry.values().cloned().collect()
 }
 
@@ -64,7 +72,7 @@ pub fn get_all_jobs() -> Vec<JobDefinition> {
 ///
 /// Vector of job names
 pub fn get_job_names() -> Vec<String> {
-    let registry = REGISTRY.read().unwrap();
+    let registry = registry_read();
     registry.keys().cloned().collect()
 }
 
@@ -78,18 +86,18 @@ pub fn get_job_names() -> Vec<String> {
 ///
 /// true if job is registered
 pub fn has_job(name: &str) -> bool {
-    let registry = REGISTRY.read().unwrap();
+    let registry = registry_read();
     registry.contains_key(name)
 }
 
 /// Clear all registered jobs (useful for testing)
 pub fn clear_registry() {
-    let mut registry = REGISTRY.write().unwrap();
+    let mut registry = registry_write();
     registry.clear();
 }
 
 /// Get job registry size
 pub fn registry_size() -> usize {
-    let registry = REGISTRY.read().unwrap();
+    let registry = registry_read();
     registry.len()
 }

@@ -110,9 +110,11 @@ templates/
     secret.yaml
   src/
   doc/
+    README.md
     01_仕様と設計.md
     02_移行ロードマップ.md
     03_実装カタログ.md
+    04_運用.md
 ```
 
 生成後のプロジェクトでは、`env/secret.yaml` をコミットさせない `.gitignore` を必ず含める。ただし、generator 自体のテンプレートとしての `templates/env/secret.yaml` は、公開してよいダミー内容であれば追跡してよい。

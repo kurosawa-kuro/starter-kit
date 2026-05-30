@@ -1,0 +1,61 @@
+# Rust Axum API Starter
+
+通常 API の第一候補にする Rust + axum スターター。
+
+`/healthz` と基本 API のテストを持つ、最小構成の HTTP API。
+
+## 構成
+
+```text
+src/
+  main.rs
+  lib.rs
+tests/
+  api_test.rs
+config/
+  env.development
+  env.test
+docker/
+  Dockerfile
+  docker-compose.yml
+```
+
+## コマンド
+
+```bash
+make build
+make run
+make test
+make fmt
+make lint
+```
+
+## 起動
+
+```bash
+PORT=8080 make run
+```
+
+確認:
+
+```bash
+curl http://127.0.0.1:8080/healthz
+```
+
+## Docker
+
+```bash
+make docker
+```
+
+停止:
+
+```bash
+make docker-down
+```
+
+## 公開安全
+
+- 実 secret、token、DB URL はコードや config に埋め込まない。
+- `target/` と coverage はコミットしない。
+- 環境ごとの実値は `.env` や secret manager で扱う。

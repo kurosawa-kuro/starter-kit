@@ -3,15 +3,24 @@
 //! Tests for job registry (happy path only).
 
 use batch::application::jobs::hello_world_job;
-use batch::registry::{clear_registry, get_all_jobs, get_job, has_job, register_job, registry_size};
+use batch::registry::{
+    clear_registry, get_all_jobs, get_job, has_job, register_job, registry_size,
+};
+use std::sync::Mutex;
 
-fn setup() {
+static REGISTRY_TEST_LOCK: Mutex<()> = Mutex::new(());
+
+fn setup() -> std::sync::MutexGuard<'static, ()> {
+    let guard = REGISTRY_TEST_LOCK
+        .lock()
+        .unwrap_or_else(|err| err.into_inner());
     clear_registry();
+    guard
 }
 
 #[test]
 fn test_register_and_get_job() {
-    setup();
+    let _guard = setup();
 
     let job = hello_world_job();
     let job_name = job.name.clone();
@@ -25,7 +34,7 @@ fn test_register_and_get_job() {
 
 #[test]
 fn test_has_job() {
-    setup();
+    let _guard = setup();
 
     let job = hello_world_job();
     let job_name = job.name.clone();
@@ -38,7 +47,7 @@ fn test_has_job() {
 
 #[test]
 fn test_get_all_jobs() {
-    setup();
+    let _guard = setup();
 
     register_job(hello_world_job());
 
@@ -49,7 +58,7 @@ fn test_get_all_jobs() {
 
 #[test]
 fn test_registry_size() {
-    setup();
+    let _guard = setup();
 
     assert_eq!(registry_size(), 0);
 
@@ -60,7 +69,7 @@ fn test_registry_size() {
 
 #[test]
 fn test_clear_registry() {
-    setup();
+    let _guard = setup();
 
     register_job(hello_world_job());
     assert_eq!(registry_size(), 1);

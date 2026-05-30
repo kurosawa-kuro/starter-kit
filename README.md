@@ -55,6 +55,7 @@ starter-kit/
 ## script/
 
 - `script/gcp/` — `gcloud` / Artifact Registry / Cloud Run / Secret Manager の補助 CLI
+- `script/cleanup-generated.sh` — `target/` / `.terraform/` / `__pycache__` などの生成物掃除
 
 ## 開発環境の前提
 
