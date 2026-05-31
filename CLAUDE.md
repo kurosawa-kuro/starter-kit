@@ -17,21 +17,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```text
 starter-kit/
 ├── starters/                 # 正典スターター（優先順）
-│   ├── rust-cli/             # Rust + clap の最小 CLI
-│   ├── rust-batch/           # Rust バッチ/ジョブ実行（tokio, sqlite, clap）
-│   ├── rust-api-axum/        # Rust + axum API（最小）
-│   ├── rust-api-axum-fullstack/  # axum + React 同梱フルスタック
-│   ├── python-batch/         # 標準ライブラリ中心の単純バッチ
-│   ├── python-ml/            # scikit-learn + LightGBM 学習パイプライン
-│   ├── python-gcp/           # GCP バッチ（BigQuery / GCS）
-│   ├── python-api-fastapi/   # FastAPI + SQLAlchemy
-│   ├── terraform/            # IaC（GCP 優先、AWS はコメント補足）
-│   ├── batch/                # TypeScript ワークフロー実行
-│   └── admin-pico/           # Pico CSS 静的 HTML 管理画面（フロント方針の体現）
+│   ├── rust/                 # Rust CLI / batch / API / fullstack
+│   ├── python/               # Python batch / ML / GCP / FastAPI
+│   ├── frontend/             # 静的 HTML 管理画面
+│   └── infra/                # Terraform など IaC
 ├── optional/                 # 目立たせない既存資産（削除しない）
 │   ├── admin/                # 管理画面 UI（React/Vue/Next/Nuxt/HTML）
 │   ├── nextjs/               # Next.js フロント
 │   ├── ts-hono-api/          # TypeScript + Hono API
+│   ├── typescript-workflow-runner/  # TypeScript workflow runner（降格済み）
 │   └── legacy-multistack/    # 多言語レガシー雛形・各種ユーティリティ
 ├── tools/
 │   └── project-generator/    # 雛形生成 CLI（旧 starter-cli, 埋め込みテンプレート方式）
@@ -43,7 +37,7 @@ starter-kit/
 
 各スターターは `Makefile` を持つ（`make help` で一覧）。代表例:
 
-### rust-cli / rust-batch / rust-api-axum / rust-api-axum-fullstack (starters/rust-*)
+### Rust starters (starters/rust/*)
 ```bash
 make build      # cargo build
 make run        # cargo run
@@ -52,14 +46,14 @@ make fmt        # cargo fmt
 make clippy     # cargo clippy -- -D warnings
 ```
 
-### python-batch / python-ml / python-gcp / python-api-fastapi (starters/python-*)
+### Python starters (starters/python/*)
 ```bash
 python -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
-# fastapi: uvicorn main:app --reload
+# fastapi: PYTHONPATH=src uvicorn micropost_api.main:app --reload
 ```
 
-### terraform (starters/terraform)
+### terraform (starters/infra/terraform)
 ```bash
 make init
 make plan ENV=dev      # environments/<env>.tfvars を使用
@@ -67,7 +61,7 @@ make apply ENV=dev
 make fmt && make validate
 ```
 
-### batch (starters/batch)
+### optional/typescript-workflow-runner
 ```bash
 npm install
 npm run dev

@@ -1,72 +1,43 @@
-Claude CLIのインストールでエラーが発生しているようですね。既存のインストールと競合しているようです。以下の手順で解決しましょう：
+# Claude Code Setup
 
-## 1. 既存のClaude CLIを完全に削除
+Claude Code を starter-kit の開発母艦として使うための最小メモ。
 
-```bash
-# 既存のclaude-codeディレクトリを削除
-sudo rm -rf /home/wsl/.npm-global/lib/node_modules/@anthropic-ai/claude-code
+## 前提
 
-# claude-codeの関連ファイルも削除
-sudo rm -rf /home/wsl/.npm-global/lib/node_modules/@anthropic-ai/.claude-code-*
+- Node.js / npm が利用できる
+- リポジトリルートで `CLAUDE.md` と `AGENTS.md` を読む
+- 秘密情報をコマンド出力やドキュメントへ貼らない
 
-# シンボリックリンクも削除
-sudo rm -f /home/wsl/.npm-global/bin/claude
-sudo rm -f /home/wsl/.npm-global/bin/cc
-```
-
-## 2. npmキャッシュをクリア
+## インストール確認
 
 ```bash
-# npmキャッシュをクリア
-npm cache clean --force
-```
-
-## 3. Claude CLIを再インストール
-
-```bash
-npm install -g @anthropic-ai/claude-code --omit=optional --loglevel=info
-
-
-# 詳細ログ付きインストール（トラブルシューティング用）
-npm install -g @anthropic-ai/claude-code --verbose --progress
-
-# グローバルインストール
-npm install -g @anthropic-ai/claude-code
-
-# または、権限エラーが出る場合
-sudo npm install -g @anthropic-ai/claude-code
-```
-
-## 4. インストール確認
-
-```bash
-# バージョン確認
 claude --version
-
-# またはエイリアスで
-cc --version
 ```
 
-## 5. パスの確認（必要な場合）
+未インストールの場合は、公式手順に従って導入する。古いローカルパスや特定ユーザー名を前提にした削除コマンドは、このリポジトリの docs には固定しない。
+
+## このリポジトリで見る順序
+
+1. [../README.md](../README.md)
+2. [../../README.md](../../README.md)
+3. [../../AGENTS.md](../../AGENTS.md)
+4. [../../CLAUDE.md](../../CLAUDE.md)
+5. 対象スターターの `README.md` / `Makefile`
+
+## 基本コマンド
 
 ```bash
-# npmグローバルbinのパスを確認
-npm bin -g
-
-# PATHに含まれているか確認
-echo $PATH | grep -o '/home/wsl/.npm-global/bin'
-
-# もしPATHに含まれていない場合、.bashrcに追加
-echo 'export PATH="$PATH:/home/wsl/.npm-global/bin"' >> ~/.bashrc
-source ~/.bashrc
+git status --short
+rg --files
+git diff --check
 ```
 
-これで `cc` コマンドが使えるようになるはずです。もし問題が続く場合は、以下も試してください：
+スターター別の検証は [../guides/development-principles.md](../guides/development-principles.md) を参照。
 
-```bash
-# npmの設定確認
-npm config get prefix
+## 運用ルール
 
-# 必要に応じてprefixを設定
-npm config set prefix ~/.npm-global
-```
+- 変更前に周辺 README / Makefile を読む。
+- 生成物や cache をコミット対象にしない。
+- `.env`、`env/secret.yaml`、credential、token を読ませない。
+- `docs/` を変えた場合、ルート README / AGENTS / CLAUDE との整合を見る。
+- `starters/` と `optional/` の判断は [../STARTER-POLICY.md](../STARTER-POLICY.md) に従う。

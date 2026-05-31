@@ -31,6 +31,10 @@ React / Next.js / TypeScript Web API / 多言語レガシー雛形は削除し�
 
 ```text
 starters/                 # 正典スターター。ユーザーが直接選ぶメイン級
+  rust/                   # Rust CLI / batch / API / fullstack
+  python/                 # Python batch / ML / GCP / FastAPI
+  frontend/               # 静的 HTML 管理画面
+  infra/                  # Terraform など IaC
 optional/                 # 既存資産・低優先・レガシー。削除せず目立たせない
 tools/project-generator/  # 新規プロジェクト生成 CLI
 docs/                     # 方針・ガイド・参照ブループリント
@@ -45,17 +49,20 @@ script/                   # 共有スクリプト
 
 ```text
 starters/
-  rust-cli/
-  rust-batch/
-  rust-api-axum/
-  rust-api-axum-fullstack/
-  python-batch/
-  python-ml/
-  python-gcp/
-  python-api-fastapi/
-  terraform/
-  batch/
-  admin-pico/
+  rust/
+    cli/
+    batch/
+    api-axum/
+    api-axum-fullstack/
+  python/
+    batch/
+    ml/
+    gcp/
+    api-fastapi/
+  frontend/
+    admin-pico/
+  infra/
+    terraform/
 ```
 
 新しいメイン級スターターを追加・移動した場合は、少なくとも以下を更新する。
@@ -110,9 +117,11 @@ templates/
     secret.yaml
   src/
   doc/
+    README.md
     01_仕様と設計.md
     02_移行ロードマップ.md
     03_実装カタログ.md
+    04_運用.md
 ```
 
 生成後のプロジェクトでは、`env/secret.yaml` をコミットさせない `.gitignore` を必ず含める。ただし、generator 自体のテンプレートとしての `templates/env/secret.yaml` は、公開してよいダミー内容であれば追跡してよい。
@@ -121,7 +130,7 @@ templates/
 
 - `docs/README.md` はドキュメント全体の索引。
 - `docs/STARTER-POLICY.md` はスターターの配置判断の根拠。
-- `docs/web-frameworks/` は正典スターターではなく、Web フレームワーク別の参照ブループリント。
+- `docs/framework-library/` は正典スターターではなく、Web / ML framework 別の参照ブループリント。
 - 古い個人アプリ由来の手順、実プロジェクト名、実通知先、実ログを docs に残さない。
 
 ドキュメントは「今後の生成・移植で迷わないこと」を目的にする。過去メモをそのまま保存する場所ではない。

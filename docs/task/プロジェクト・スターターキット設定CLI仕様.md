@@ -1,67 +1,27 @@
-# プロジェクト・スターターキット設定CLI仕様
+# project-generator 仕様メモ
 
 ## 目的
 
-新規プロジェクト作成時に、指定したディレクトリへ最低限必要なスターターキットのスケルトンを自動生成する。
+新規プロジェクト作成時に、AI と人間が同じ前提で作業できる最小スケルトンを生成する。
 
-docのテンプレートは
-<repo>/docs/templates
-<repo>/docs/templates/project-docs
-を利用せよ
+実装本体は [tools/project-generator](../../tools/project-generator/)。
 
-## 概要
+## 実装
 
-Rust製CLIにプロジェクトの作成先フルパスを入力すると、事前に用意されたテンプレートファイルをもとに、指定ディレクトリ配下へ標準構成のファイル・ディレクトリを作成する。
-
-## 実装言語
-
-Rust
+- 言語: Rust
+- バイナリ名: `starter`
+- 既存ファイルはデフォルトで上書きしない
+- テンプレートは `tools/project-generator/templates/` に置く
 
 ## 入力
 
-### 引数
-
-作成先プロジェクトディレクトリのフルパス。
-
-例：
+作成先ディレクトリ。
 
 ```bash
-starter C:\dev\my-project
+starter /path/to/new-project
 ```
 
-または PowerShell の場合：
-
-```powershell
-starter.exe C:\dev\my-project
-```
-
-## テンプレート構成
-
-CLIは、あらかじめ用意されたテンプレートディレクトリをもとにファイルを生成する。
-`secret.yaml` と `.gitignore` は初期構成に必ず含める。
-`secret.yaml` はローカル秘密情報用であり、生成される `.gitignore` でコミット対象外にする。
-
-```text
-templates/
-  .gitignore
-  CLAUDE.md
-  AGENTS.md
-  Makefile
-  README.md
-  doppler.yaml
-  env/
-    config.yaml
-    secret.yaml
-  src/
-  doc/
-    01_仕様と設計.md
-    02_移行ロードマップ.md
-    03_実装カタログ.md
-```
-
-## 出力
-
-指定されたディレクトリ配下に、以下のスケルトンを作成する。
+## 出力構成
 
 ```text
 .gitignore
@@ -75,83 +35,59 @@ env/
   secret.yaml
 src/
 doc/
+  README.md
   01_仕様と設計.md
   02_移行ロードマップ.md
   03_実装カタログ.md
+  04_運用.md
 ```
 
-## 作成内容
+## secret.yaml と .gitignore
 
-### ルート直下に作成するファイル
+`env/secret.yaml` はローカル秘密情報の置き場として生成する。ただし、生成先プロジェクトでは `.gitignore` によりコミット対象外にする。
 
-* `.gitignore`
-* `CLAUDE.md`
-* `AGENTS.md`
-* `Makefile`
-* `README.md`
-* `doppler.yaml`
+generator 自体のテンプレートに含まれる `templates/env/secret.yaml` は、公開してよいダミー内容だけにする。
 
-### 作成するディレクトリ
+`.gitignore` には最低限以下を含める。
 
-* `env`
-* `src`
-* `doc`
-
-### `env` 配下に作成するファイル
-
-* `env/config.yaml`
-* `env/secret.yaml`
-
-### `doc` 配下に作成するファイル
-
-* `doc/01_仕様と設計.md`
-* `doc/02_移行ロードマップ.md`
-* `doc/03_実装カタログ.md`
+```gitignore
+.env
+.env.*
+!.env.example
+env/secret.yaml
+secret.yaml
+secrets.yaml
+credentials.json
+service-account.json
+*.pem
+*.key
+*.tfvars
+*.tfstate
+.terraform/
+.doppler/
+artifacts/
+logs/
+tmp/
+```
 
 ## 挙動
 
-1. CLI実行時に、作成先のフルパスを引数として受け取る。
-2. 指定パスが存在しない場合は、ディレクトリを作成する。
-3. テンプレートディレクトリを読み込む。
-4. テンプレート内のディレクトリ構成を、作成先へ再現する。
-5. テンプレート内のファイルを、作成先へコピーする。
-6. 既存ファイルがある場合は、原則として上書きしない。
-7. 作成完了後、作成したプロジェクトパスを表示する。
-
-## 上書きルール
-
-既存ファイルが存在する場合、デフォルトでは上書きしない。
-
-```text
-既存ファイルあり: スキップ
-既存ファイルなし: テンプレートからコピー
-```
+1. 作成先パスを受け取る。
+2. パスが存在しなければ作成する。
+3. テンプレート構成を再現する。
+4. 既存ファイルはスキップする。
+5. 作成結果を表示する。
 
 ## エラー条件
 
-以下の場合はエラーとして処理を終了する。
+- 作成先パスが未指定。
+- 作成先ディレクトリを作成できない。
+- テンプレートを読み込めない。
+- ファイル作成に失敗した。
 
-* 作成先フルパスが指定されていない
-* 指定パスにディレクトリを作成できない
-* テンプレートディレクトリが存在しない
-* テンプレートファイルを読み込めない
-* ファイルまたはディレクトリの作成に失敗した
-* ファイルコピーに失敗した
+## 更新時の連動先
 
-## 想定用途
-
-* 新規PoCプロジェクトの初期化
-* 個人開発プロジェクトの標準構成作成
-* Claude Code / Codex / GitHub Copilot で扱いやすい初期ドキュメント配置
-* 実装前に仕様・移行計画・実装カタログを整理するための土台作成
-
-## 非対象
-
-以下は本CLIでは扱わない。
-
-* アプリケーションコードの自動生成
-* npm / pnpm / yarn などの依存関係インストール
-* Gitリポジトリ初期化
-* Dopplerプロジェクト作成
-* CI/CD設定の生成
-* Docker / Kubernetes 構成の生成
+- `tools/project-generator/README.md`
+- `tools/project-generator/templates/`
+- `docs/templates/project-docs/`
+- ルート `AGENTS.md`

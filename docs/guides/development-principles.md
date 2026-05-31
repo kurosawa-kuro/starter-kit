@@ -1,66 +1,132 @@
-了解しました 👍
-`doc/` フォルダを追加して **仕様.md / 設計.md / 禁止.md** を配置した最新版の整理をしました。
+# 開発共通方針
 
----
+starter-kit と、ここから生成されるプロジェクトで共通して守る基本方針。
 
-# 📌 開発共通基本方針
+## 作業姿勢
 
-* **環境変数**：`.env` と連携する **config.js** を必須利用
-* **プロセス管理**：実行前に必ず前のプロセスを終了
-* **ポート番号**
+- 既存の `README.md`、`Makefile`、設定ファイルを読んでから変更する。
+- 実行できる検証は実行する。実行できない場合は理由を残す。
+- 仕様・構成を変えたら、関連ドキュメントも同時に更新する。
+- 公開前提で作業し、秘密情報や実運用データを置かない。
 
-  * フロント：**3000系**
-  * バック：**8000系**
-  * ミドル：**5000系**
-* **Makefile タスク**
+## 設定と秘密情報
 
-  * `setup`：初期セットアップ
-  * `dev`：開発サーバ起動
-  * `test`：最低限の正常系テスト
-  * `stop-port`：指定ポートのプロセス強制終了
-* **UIテーマ**：ダーク固定
-* **CSS**：Tailwind を採用（必要な場合のみ）
+共有してよいもの:
 
----
-
-# 📂 ディレクトリ構成（最新版）
-
+```text
+.env.example
+config.example.yaml
+env/config.yaml
 ```
-myapp/
-├── cmd/
-│   └── server/
-│       └── index.js             # エントリポイント
-├── internal/
-│   ├── handler/                 # ルーティング層
-│   │   ├── todoHandler.js
-│   │   └── categoryHandler.js
-│   ├── service/                 # ビジネスロジック層
-│   │   ├── todoService.js
-│   │   └── categoryService.js
-│   ├── repository/              # データアクセス層
-│   │   ├── todoRepository.js
-│   │   └── categoryRepository.js
-│   └── model/                   # モデル定義
-│       ├── todoModel.js
-│       └── categoryModel.js
-├── pkg/
-│   ├── prisma.js                # Prismaクライアント初期化
-│   ├── logger.js                # ロガー
-│   ├── util.js                  # 汎用ユーティリティ
-│   └── config.js                # 環境変数・設定まとめ
-├── prisma/
-│   ├── schema.prisma
-│   └── migrations/
-├── scripts/
-│   └── port-stop.sh             # ポート強制終了スクリプト
-├── test/
-│   └── api.http                 # API テスト用（VS Code REST Client / HTTPie 用）
-├── doc/
-│   ├── 仕様.md                   # 機能仕様書
-│   ├── 設計.md                   # 設計方針／アーキテクチャ
-│   └── 禁止.md                   # 禁止事項（アンチパターン・NGルール）
-├── Makefile
-├── .env
-├── package.json
-└── README.md
+
+コミットしないもの:
+
+```text
+.env
+.env.*
+env/secret.yaml
+secret.yaml
+credentials.json
+service-account.json
+*.pem
+*.key
+*.tfvars
+*.tfstate
+.doppler/
 ```
+
+Doppler を使う場合も、token、実 Project 名、Config 名、Secret 名は公開用ドキュメントへ固定しない。
+
+## ポート規約
+
+| 種別 | 範囲 |
+|---|---|
+| フロント / 静的 UI | 3000 番台 |
+| API | 8000 番台 |
+| ミドルウェア / DB 管理 UI | 5000 番台 |
+
+既存スターターが別ポートを使っている場合は、そのスターターの README を一次情報にする。
+
+## Makefile 方針
+
+スターターには可能な範囲で以下を用意する。
+
+| Target | 用途 |
+|---|---|
+| `help` | 利用可能な target を表示 |
+| `setup` / `install` | 依存関係の導入 |
+| `run` / `dev` | ローカル実行 |
+| `test` | 最低限のテスト |
+| `fmt` | フォーマット |
+| `lint` / `clippy` / `vet` | 静的検査 |
+| `clean` | 生成物の削除 |
+
+破壊的操作、デプロイ、課金が発生する操作は自動実行前提にしない。
+
+## ディレクトリの基本形
+
+小さなスターターでは単純さを優先する。必要になった時だけ分割する。
+
+```text
+project/
+  README.md
+  AGENTS.md
+  CLAUDE.md
+  Makefile
+  .gitignore
+  env/
+    config.yaml
+    secret.yaml
+  src/
+  tests/
+  doc/
+    README.md
+    01_仕様と設計.md
+    02_移行ロードマップ.md
+    03_実装カタログ.md
+    04_運用.md
+```
+
+## 技術別検証
+
+Rust:
+
+```bash
+cargo fmt --check
+cargo clippy -- -D warnings
+cargo test
+```
+
+Python:
+
+```bash
+python3 -m unittest discover -s tests
+python3 -m pytest
+```
+
+Node / TypeScript:
+
+```bash
+npm test
+npm run lint
+npm run build
+```
+
+Terraform:
+
+```bash
+terraform fmt -check -recursive
+terraform validate
+```
+
+共通:
+
+```bash
+git diff --check
+```
+
+## UI 方針
+
+スターターの目的に合う UI を優先する。管理画面や運用ツールは、装飾よりも一覧性、入力しやすさ、状態確認のしやすさを重視する。
+
+CSS framework は必須ではない。既存のデザイン方針がある場合はそれに合わせる。
