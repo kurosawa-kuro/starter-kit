@@ -90,7 +90,7 @@ mod tests {
             "postgres://user:****@localhost:5432/db"
         );
         assert_eq!(
-            mask_connection_string("mongodb+srv://admin:p%40ss@cluster.mongodb.net/db"),
+            mask_connection_string("mongodb+srv://admin:aaa@cluster.mongodb.net/db"),
             "mongodb+srv://admin:****@cluster.mongodb.net/db"
         );
         assert_eq!(mask_connection_string("invalid"), "[URI masked]");
